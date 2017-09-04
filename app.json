@@ -1,0 +1,33 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/dashboard/dashboard",
+    "pages/logs/logs"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "WeChat",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#3cc51f",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "image/icon_rss.png",
+        "selectedIconPath": "image/icon_rss_select.png",
+        "text": "RSS"
+      },
+      {
+        "pagePath": "pages/dashboard/dashboard",
+        "iconPath": "image/icon_plus.png",
+        "selectedIconPath": "image/icon_plus_select.png",
+        "text": "新增"
+      }
+    ]
+  }
+}
