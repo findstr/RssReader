@@ -1,2 +1,21 @@
-<!--pages/dashboard/dashboard.wxml-->
-<text>{{page}}.wxml</text>
+<view>
+	<view wx:for="{{rss}}" wx:key="index">
+		<view style="{{item.style}}" class="rss-top" 
+      bindtouchstart="touchS"
+      bindtouchmove="touchM"
+      bindtouchend="touchE"
+      data-index="{{index}}">
+      <view class="rss-image">
+       <image src="image/icon_default.png" style="width:32px;height:32px"></image>
+      </view>
+      <view class = "rss-data">
+        <text class="rss-title"> {{item.title}} </text>
+        <text class="rss-subtitle"> {{item.subtitle}} </text>
+      </view>
+		</view>
+    <view class="rss-remove">
+        hello
+    </view>
+	</view>
+</view>
+

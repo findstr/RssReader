@@ -1,13 +1,13 @@
 {
   "pages": [
-    "pages/index/index",
     "pages/dashboard/dashboard",
+    "pages/index/index",
     "pages/logs/logs"
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#fff",
-    "navigationBarTitleText": "WeChat",
+    "navigationBarBackgroundColor": "#34B634",
+    "navigationBarTitleText": "文章列表",
     "navigationBarTextStyle": "black"
   },
   "tabBar": {
@@ -26,7 +26,7 @@
         "pagePath": "pages/dashboard/dashboard",
         "iconPath": "image/icon_plus.png",
         "selectedIconPath": "image/icon_plus_select.png",
-        "text": "新增"
+        "text": "管理"
       }
     ]
   }

@@ -1,1 +1,46 @@
 /* pages/dashboard/dashboard.wxss */
+page {
+  background-color:gainsboro;
+  display:block;
+  min-height:100%;
+}
+
+.rss-top {
+  background:white;
+  min-height:70px;
+  border:3px;
+  border-radius: 2px;
+  margin-bottom: 1px;
+  position:relative;
+  padding-left:10px;
+  padding-top:20px;
+  display:flex;
+}
+
+.rss-image {
+  margin-top:10px;
+  margin-left:10px;
+  margin-right:20px;
+}
+
+.rss-data {
+  display:flex;
+  flex-direction: column;
+}
+.rss-title {
+  font-size:18px;
+  font-weight:bold;
+  font-weight:500;
+  font-size:17px;
+  color:#333;
+}
+
+.rss-subtitle {
+  margin-top: 10px;
+  color:#737373;
+  font-size:15px;
+}
+
+.rss-remove {
+  z-index:-1;
+}
