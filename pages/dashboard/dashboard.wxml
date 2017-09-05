@@ -7,8 +7,8 @@
       data-index="{{index}}">
       <image class="rss-image" src="image/icon_default.png" style="width:32px;height:32px"></image>
       <view class = "rss-data">
-        <text class="rss-title"> {{item.title}} </text>
-        <text class="rss-subtitle"> {{item.subtitle}} </text>
+        <text class="-ui-title"> {{item.title}} </text>
+        <text class="-ui-subtitle"> {{item.subtitle}} </text>
       </view>
 		</view>
     <view class="rss-remove" data-index="{{index}}" bindtap="onRemove">

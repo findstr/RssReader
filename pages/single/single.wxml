@@ -1,0 +1,13 @@
+<swiper class="swiper-container" indicator-dots="true">
+  <view  wx:for="{{chapter}}">
+    <swiper-item class="swiper-item-container">
+      <view class="chapter">
+        <scroll-view scroll-y="true" scroll-with-animation="true" class="scroll-container">
+          <view class="-ui-title">{{item.title}}</view>
+          <view class="-ui-line"></view>
+          <view class="-ui-subtitle">{{item.content}}</view>
+        </scroll-view>
+      </view>
+    </swiper-item>
+  </view>
+</swiper>

@@ -4,10 +4,17 @@ const app = getApp()
 
 Page({
   data: {
-    motto: 'Hello World',
-    userInfo: {},
-    hasUserInfo: false,
-    canIUse: wx.canIUse('button.open-type.getUserInfo')
+    chapter:[
+      {
+        title:"标题",
+        abs: "为了适应广大的前端开发者，我们的 WXSS 具有 CSS 大部分特性。 同时为了更适合开发微信小程序，我们对 CSS 进行了扩充以及修改。",
+        style: "chapter-item"
+      },{
+        title: "标题1",
+        abs: "为了",
+        style: "chapter-item"
+      }
+    ]
   },
   //事件处理函数
   bindViewTap: function() {
@@ -50,5 +57,41 @@ Page({
       userInfo: e.detail.userInfo,
       hasUserInfo: true
     })
+  },
+
+  //logic
+  touched:null,
+  setClass: function(idx, style) {
+    var param = {}
+    var k = "chapter[" + idx.toString() + "].style"
+    param[k] = style
+    this.setData(param)
+  },
+  touchS: function(e) {
+    var idx = e.target.dataset.index
+    if (idx == undefined)
+      return ;
+    this.setClass(idx, "chapter-item-select")
+    this.touched = idx
+    console.log("Start")
+  },
+  touchM: function(e) {
+    var idx = this.touched
+    if (idx == undefined)
+      return;
+    if (idx == null)
+      return
+    this.setClass(idx, "chapter-item")
+    this.touched = null
+  },
+  touchE: function(e) {
+    if (this.touched == null)
+      return
+    this.setClass(this.touched, "chapter-item")
+    this.touched = null
+    wx.navigateTo({
+      url: '../single/single'
+    })
   }
+
 })

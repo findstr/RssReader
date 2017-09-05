@@ -1,9 +1,5 @@
 /* pages/dashboard/dashboard.wxss */
-page {
-  background-color:gainsboro;
-  display:block;
-  min-height:100%;
-}
+@import "../common/ui.wxss";
 
 .rss-item, .rss-remove, .rss-add{
   border:3px;
@@ -53,13 +49,4 @@ page {
   display:flex;
   flex-direction: column;
 }
-.rss-title {
-  font-weight:500;
-  font-size:17px;
-  color:#333;
-}
 
-.rss-subtitle {
-  color:#737373;
-  font-size:15px;
-}

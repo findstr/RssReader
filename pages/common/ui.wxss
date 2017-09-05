@@ -1,0 +1,46 @@
+page {
+  background-color:#e6ecf0;
+  height:100%;
+  width:100%;
+  display:flex;
+  flex-direction: column;
+  font-weight:500;
+  font-size:17px;
+  color:#333;
+}
+
+.-ui-title {
+  font-weight:500;
+  font-size:17px;
+  color:#333;
+}
+
+.-ui-subtitle {
+  color:#737373;
+  font-size:13px;
+}
+
+.-ui-swiper-dot,.-ui-swiper-dot-active{
+    width:40rpx;
+    display: inline-flex;
+    height: 10rpx; 
+    justify-content:space-between;
+    flex-grow: 1;  
+    border-radius: 8rpx;
+}
+
+.-ui-swiper-dot {
+    background: rgba(255,255,255,0.8);
+}
+
+.-ui-swiper-dot-active {
+    background:rgba(255,0,0,0.8); 
+}
+
+.-ui-line {
+  height:1px;
+  background:#ddd;
+  overflow:hidden;
+  margin-top:10px;
+  margin-bottom:10px;
+}

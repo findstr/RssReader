@@ -1,0 +1,64 @@
+/* pages/single/single.wxss */
+@import "../common/ui.wxss";
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  color: transparent;
+}
+
+page {
+  display:block;
+}
+
+.swiper-container {
+  height:100%;
+}
+.swiper-item-container {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  align-content:center;
+  padding-top:10px;
+}
+
+.chapter {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  background:white;
+  width:700rpx;
+  height: 990rpx;
+  border: 1px solid #d4d6d8;
+  border-radius: 8px;
+}
+
+.scroll-container {
+  width:650rpx;
+  height:880rpx;
+
+  padding-top:5px;
+  padding-left:10px;
+  padding-right:10px;
+}
+
+.scroll-info {
+  color:#737373;
+  font-size:13px;
+  display:flex;
+  flex-direction:column;
+  box-shadow:0 0 50px 30px #ffffff inset;
+  border: 10px ridge #F4E9E0;
+}
+
+.-ui-title {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  font-weight:bold;
+}
+
+.-ui-subtitle {
+  line-height: 200%;
+}
+
