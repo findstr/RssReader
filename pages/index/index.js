@@ -7,7 +7,7 @@ Page({
     chapter:[
       {
         title:"标题",
-        abs: "为了适应广大的前端开发者，我们的 WXSS 具有 CSS 大部分特性。 同时为了更适合开发微信小程序，我们对 CSS 进行了扩充以及修改。",
+        abs: "为了适应广大的前端开发为了适应广大的前端开发为了适应广大的前端开发为了适应广大的前端开发为了适应广大的前端开发为了适应广大的前端开发为了适应广大的前端开发者，我们的 WXSS 具有 CSS 大部分特性。 同时为了更适合开发微信小程序，我们对 CSS 进行了扩充以及修改。",
         style: "chapter-item"
       },{
         title: "标题1",
@@ -60,6 +60,12 @@ Page({
   },
 
   //logic
+  ctrl_jump:false,
+  onHide: function () {
+    this.ctrl_jump = false
+    console.log("onHide")
+  },
+
   touched:null,
   setClass: function(idx, style) {
     var param = {}
@@ -89,6 +95,9 @@ Page({
       return
     this.setClass(this.touched, "chapter-item")
     this.touched = null
+    if (this.ctrl_jump)
+      return
+    this.ctrl_jump = true
     wx.navigateTo({
       url: '../single/single'
     })

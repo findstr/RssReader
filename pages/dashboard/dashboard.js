@@ -107,7 +107,7 @@ Page({
       title: "新增",
       subtitle: "第:"+l,
       url: url,
-      style: "left:0px"
+      style: "right:0px"
     }
     this.setData({"rss":rss})
   },
@@ -117,7 +117,7 @@ Page({
   touchIndex:null,
   itemPos:0,
 	//const
-  delwidth:100,
+  delwidth:60,
   updateSpeed:10,
   setPos: function (idx, x) {
     console.log("setPos:"+idx)

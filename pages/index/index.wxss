@@ -4,12 +4,12 @@
 .chapter-item, .chapter-item-select {
   border:3px;
   border-radius: 2px;
-  min-height:80px;
+  min-height:60px;
 
   padding-top:10px;
-  padding-left:20px;
-  padding-right:10px;
   padding-bottom:10px;
+  padding-left:10px;
+  padding-right:5px;
 
   background:white;
   flex-direction: column;
@@ -18,14 +18,18 @@
 }
 
 .chapter-item {
-  margin-top:20px;
-  margin-left:10px;
-  margin-right:10px;
+  margin-bottom:1px;
 }
 
 .chapter-item-select {
-  margin-top:20px;
-  margin-left:10px;
-  margin-right:10px;
+  margin-bottom:1px;
   transform: scale(0.98);  
+}
+
+.-ui-title {
+  font-size:13px;
+}
+
+.-ui-subtitle {
+  font-size:10px;
 }
