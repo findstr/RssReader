@@ -74,15 +74,53 @@ Page({
   onShareAppMessage: function () {
 
   },
+  //logic
+  rss_subscribe_url:"",
 
+  onRssInput: function(e) {
+    this.rss_subscribe_url = e.detail.value
+  },
+  onRemove: function(e) {
+    var idx = e.target.dataset.index
+    this.resetItem(-1)  //force reset
+    var rss = this.data.rss
+    rss.splice(idx, 1)
+    this.setData({"rss":rss})
+    console.log("onRemove", idx)
+  },
+
+  onSave: function(e) {
+    this.resetItem(-1)  //force reset
+    var url = this.rss_subscribe_url
+    console.log("onSave:" + url)
+    if (url == "") {
+      wx.showModal({
+        title: '提示',
+        content: '请输入要订阅的RSS地址',
+        showCancel: false
+      })
+      return
+    }
+    var rss = this.data.rss
+    var l = rss.length
+    rss[l] = {
+      title: "新增",
+      subtitle: "第:"+l,
+      url: url,
+      style: "left:0px"
+    }
+    this.setData({"rss":rss})
+  },
+
+  //ui effect
   touchX:0,
   touchIndex:null,
   itemPos:0,
 	//const
   delwidth:100,
   updateSpeed:10,
-
   setPos: function (idx, x) {
+    console.log("setPos:"+idx)
     this.itemPos = x
     var style = "right:" + x + "px"
     var k = "rss[" + idx.toString() + "].style"
@@ -99,7 +137,6 @@ Page({
       this.itemPos = 0
     this.setPos(idx, this.itemPos)
 	},
-
 
   resetItem: function(idx) {
     var pos = this.itemPos;
