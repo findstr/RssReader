@@ -20,7 +20,7 @@
     <view class="rss-add-info">
       <input class="rss-add-input" bindinput="onRssInput" type="text" placeholder="要订阅的RSS地址"></input>
     </view>
-    <button bindtap="onSave">保存</button>
+    <button type="primary" class="-ui-button" size="10px" bindtap="onSave">保存</button>
   </view>
 </view>
 

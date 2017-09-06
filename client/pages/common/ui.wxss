@@ -38,6 +38,10 @@ page {
     background:rgba(255,0,0,0.8); 
 }
 
+.-ui-button {
+  font-size:10px;
+}
+
 .-ui-line {
   height:1px;
   background:#ddd;
