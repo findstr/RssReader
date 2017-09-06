@@ -1,43 +1,58 @@
 // pages/dashboard/dashboard.js
+var config = require ("../common/config.js")
+const app = getApp()
+
 Page({
   /**
    * 页面的初始数据
    */
   data: {
-    rss:[
-      { title: "你好",
-        subtitle: "我是副标题",
-        url: "http://hello",
-        style:"left:0px"
+    rss:[]
+  },
+
+  refreshList: function() {
+    var uid = wx.getStorageSync("uid")
+    console.log("rss:" + uid)
+    if (uid == "") {
+      wx.showModal({
+        title: '提示',
+        content: '无法获取用户ID，请重新授权登录',
+        showCancel: false
+      })
+      return
+    }
+    var that = this
+    var url_ = config.requrl + "/dashboard/list"
+    wx.request({
+      url: url_,
+      data: {
+        uid: uid
       },
-      {
-        title: "世界",
-        subtitle: "我是副标题",
-        url: "http://world",
-        style:"left:0px"
+      header: {
+        'content-type': 'application/json'
+      },
+      dataType: "json",
+      success: function (res) {
+        var dat = res.data
+        console.log(dat)
+        that.setData({
+          "rss": dat
+        })
+        wx.hideLoading()
+      },
+      fail: function (res) {
+        console.log(res)
       }
-    ]
+    })
+    wx.showLoading({
+      title: '加载中',
+    })
   },
-
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad: function (options) {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady: function () {
-
-  },
-
   /**
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
-
+    this.refreshList()
   },
 
   /**
@@ -58,7 +73,7 @@ Page({
    * 页面相关事件处理函数--监听用户下拉动作
    */
   onPullDownRefresh: function () {
-
+    this.refreshList()
   },
 
   /**
