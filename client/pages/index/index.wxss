@@ -1,10 +1,16 @@
 /**index.wxss**/
 @import "../common/ui.wxss";
 
-.chapter-item, .chapter-item-select {
+.loading {
+  z-index:3;
+  background:rgba(0,0,0,180);
+  height: 100%;
+}
+
+.chapter-item, .chapter-item-select{
   border:3px;
   border-radius: 2px;
-  min-height:60px;
+  min-height:30px;
 
   padding-top:10px;
   padding-bottom:10px;
@@ -12,9 +18,10 @@
   padding-right:5px;
 
   background:white;
-  flex-direction: column;
+  flex-direction: row;
   
   display:flex;
+  align-items:center;
 }
 
 .chapter-item {
@@ -26,10 +33,16 @@
   transform: scale(0.98);  
 }
 
+.-ui-title, .-ui-title-read {
+  font-size:13px;
+}
+
 .-ui-title {
+  font-weight:bold;
   font-size:13px;
 }
 
 .-ui-subtitle {
   font-size:10px;
 }
+

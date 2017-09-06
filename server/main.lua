@@ -1,12 +1,14 @@
-local log = require "log"
 local core = require "silly.core"
 local env = require "silly.env"
 local server = require "http.server"
 local client = require "http.client"
+local log = require "log"
+local dns = require "dns"
+local gzip = require "gzip"
 local db = require "db"
 local dispatch = require "router"
 
-log.print = print
+log.print = core.log
 
 dispatch["/"] = function(reqeust, body, write)
 	local body = [[
@@ -21,17 +23,19 @@ dispatch["/"] = function(reqeust, body, write)
 		</html>
 	]]
 	local head = {
+		"Content-Encoding: gzip",
 		"Content-Type: text/html",
-		}
-
-	write(200, head, body)
+	}
+	write(200, head, gzip.deflate(body))
 end
 
+local tool = require "tool"
 
 core.start(function()
+	dns.server("223.5.5.5@53")
 	db.start()
 	require "userinfo"
-	require "dashboard"
+	require "rsslist"
 	server.listen(assert(env.get("listen")), function(request, body, write)
 		log.print(request.uri)
 		log.print(request.version)

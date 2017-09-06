@@ -7,10 +7,11 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#34B634",
+    "navigationBarBackgroundColor": "rgb(39,41,46)",
     "navigationBarTitleText": "文章列表",
-    "navigationBarTextStyle": "black",
-    "enablePullDownRefresh": true
+    "navigationBarTextStyle": "white",
+    "enablePullDownRefresh": true,
+    "onReachBottomDistance": 50
   },
   "tabBar": {
     "color": "#7A7E83",

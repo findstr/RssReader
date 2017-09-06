@@ -1,3 +1,6 @@
 [submodule "silly"]
 	path = silly
 	url = git@github.com:findstr/silly
+[submodule "zlib"]
+	path = zlib
+	url = git@github.com:madler/zlib.git

@@ -1,7 +1,8 @@
+local core = require "silly.core"
+local env = require "silly.env"
 local log = require "log"
 local dispatch = require "router"
 local format = string.format
-local client = require "http.client"
 local tool = require "tool"
 local db = require "db" .instance()
 
@@ -20,11 +21,13 @@ local function genid()
 	return id
 end
 
-local fmt_weid_url = 'https://api.weixin.qq.com/sns/jscode2session?appid=wx738bb0a8533b90b3&secret=63cf77f077dfcef07b70d82772e23972&js_code=%s&grant_type=authorization_code'
+local appid = assert(env.get("appid"), "appid")
+local secret = assert(env.get("secret"), "secret")
+local fmt_weid_url = 'https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code'
 
 local function weid(code)
 	local ack = {}
-	local status, header, body = client.GET(format(fmt_weid_url, code))
+	local status, header, body = tool.httpget(format(fmt_weid_url,appid, secret, code))
 	log.print(body)
 	tool.jsondecode(body, ack)
 	return ack.openid
@@ -36,12 +39,36 @@ dispatch["/userinfo/getid"] = function(req, body, write)
 	local code = req.form['code']
 	local wid = weid(code)
 	local ok, uid = db:hget(dbk_account_weid, wid)
+	log.print("/userinfo/getid", code, uid, wid)
 	if not ok then
 		uid = genid()
 		db:hset(dbk_account_weid, wid, uid)
-		db:hset(dbk_account_uid, uid, weid)
+		db:hset(dbk_account_uid, uid, wid)
 	end
-	log.print("/userinfo/getid", code, uid)
 	write(200, head, format(ack_getuid, uid))
 end
+
+---------------module
+local M = {}
+
+function M.getall()
+	local out = {}
+	local ok, res = db:hgetall(dbk_account_uid)
+	if not ok then
+		log.print(res)
+		return out
+	end
+	local outi = 1
+	for i = 1, #res, 2 do
+		out[outi] = res[i]
+		outi = outi + 1
+	end
+	return out
+end
+
+core.start(function()
+	M.getall()
+end)
+
+return M
 

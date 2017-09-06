@@ -1,13 +1,12 @@
 page {
   background-color:#e6ecf0;
-  height:100%;
   width:100%;
+  min-height:100%;
   display:flex;
   flex-direction: column;
   font-weight:500;
   font-size:17px;
   color:#333;
-  overflow: hidden;
 }
 
 .-ui-title {

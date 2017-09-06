@@ -1,17 +1,14 @@
 <!--index.wxml-->
-<view>
-<view wx:for="{{chapter}}" wx:key="index">
-  <view class="{{item.style}}"
-      bindtouchstart="touchS" 
-      bindtouchmove="touchM"
-      bindtouchend="touchE" 
-      data-index="{{index}}">
-      <view data-index="{{index}}" class="-ui-title">
-        {{item.title}}
+<view class="chapter-list">
+    <view wx:for="{{chapter}}" wx:key="index">
+      <view class="{{item.style}}"
+          bindtouchstart="touchS" 
+          bindtouchmove="touchM"
+          bindtouchend="touchE" 
+          data-index="{{index}}">
+          <view class="{{item.read ? '-ui-title-read':'-ui-title'}}" data-index="{{index}}">
+            {{item.title}}
+          </view>
       </view>
-      <view data-index="{{index}}" class="-ui-subtitle">
-        {{item.abs}}
-      </view>
-  </view>
-</view>
+    </view>
 </view>

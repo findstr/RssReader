@@ -11,26 +11,17 @@ Page({
   },
 
   refreshList: function() {
-    var uid = wx.getStorageSync("uid")
-    console.log("rss:" + uid)
-    if (uid == "") {
-      wx.showModal({
-        title: '提示',
-        content: '无法获取用户ID，请重新授权登录',
-        showCancel: false
-      })
+    var uid = app.getuid()
+    if (uid == null)
       return
-    }
     var that = this
-    var url_ = config.requrl + "/dashboard/list"
+    var url_ = config.requrl + "/rsslist/get"
     wx.request({
       url: url_,
       data: {
         uid: uid
       },
-      header: {
-        'content-type': 'application/json'
-      },
+      method: 'POST',
       dataType: "json",
       success: function (res) {
         var dat = res.data
@@ -46,13 +37,31 @@ Page({
     })
     wx.showLoading({
       title: '加载中',
+      mask: true
     })
   },
+
+  formSubmit: function(e) {
+    var that = this
+    var url_ = config.requrl + "/notice/subscribe"
+    wx.request({
+      url: url_,
+      data: {
+        uid: 0,
+        formid: e.detail.formId
+      },
+      method: 'POST',
+    })
+  },
+
   /**
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
-    this.refreshList()
+    var that = this
+    app.login(function() {
+      that.refreshList()
+    })
   },
 
   /**
@@ -90,21 +99,48 @@ Page({
 
   },
   //logic
-  rss_subscribe_url:"",
+  rss_subscribe_url:"http://blog.gotocoding.com/feed",
 
   onRssInput: function(e) {
     this.rss_subscribe_url = e.detail.value
   },
   onRemove: function(e) {
+    var uid = app.getuid()
     var idx = e.target.dataset.index
     this.resetItem(-1)  //force reset
     var rss = this.data.rss
+    var item = rss[idx]
     rss.splice(idx, 1)
     this.setData({"rss":rss})
+    var url_ = config.requrl + "/rsslist/del"
+    console.log(item.rssid)
+    wx.request({
+      url: url_,
+      method: "POST",
+      data: {
+        rssid: item.rssid,
+        uid: uid
+      },
+      header: {
+        'content-type': 'application/json'
+      },
+      dataType: "json",
+      success: function (res) {
+        wx.hideLoading()
+      },
+      fail: function (res) {
+        wx.showModal({
+          title: '提示',
+          content: res.data.errmsg,
+          showCancel: false
+        })
+      }
+    })
     console.log("onRemove", idx)
   },
 
   onSave: function(e) {
+    var that = this
     this.resetItem(-1)  //force reset
     var url = this.rss_subscribe_url
     console.log("onSave:" + url)
@@ -116,15 +152,47 @@ Page({
       })
       return
     }
-    var rss = this.data.rss
-    var l = rss.length
-    rss[l] = {
-      title: "新增",
-      subtitle: "第:"+l,
-      url: url,
-      style: "right:0px"
-    }
-    this.setData({"rss":rss})
+    var uid = app.getuid()
+    if (uid == null)
+      return
+    console.log("save:" + uid)
+    var url_ = config.requrl + "/rsslist/add"
+    wx.login({
+      success: res => {
+        console.log("code:" + res.code)
+        wx.request({
+          url: url_,
+          method: "POST",
+          data: {
+            rss: url,
+            uid: uid
+          },
+          header: {
+            'content-type': 'application/json'
+          },
+          dataType: "json",
+          success: function (res) {
+            var len = that.data.rss.length
+            var param = {}
+            param["rss["+len+"]"] = res.data
+            console.log(res)
+            that.setData(param)
+            wx.hideLoading()
+          },
+          fail: function (res) {
+            wx.showModal({
+              title: '提示',
+              content: res.data.errmsg,
+              showCancel: false
+            })
+          }
+        })
+      }
+    })
+    wx.showLoading({
+      "title": "保存中",
+      mask: true
+    })
   },
 
   //ui effect

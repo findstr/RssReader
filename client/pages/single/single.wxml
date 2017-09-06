@@ -1,13 +1,20 @@
-<swiper class="swiper-container" indicator-dots="true">
-  <view  wx:for="{{chapter}}">
-    <swiper-item class="swiper-item-container">
-      <view class="chapter">
-        <scroll-view scroll-y="true" scroll-with-animation="true" class="scroll-container">
-          <view class="-ui-title">{{item.title}}</view>
-          <view class="-ui-line"></view>
-          <view class="-ui-subtitle">{{item.content}}</view>
-        </scroll-view>
+<import src="../../wxParse/wxParse.wxml"/>
+<view class="chapter">
+  <scroll-view scroll-y="true" scroll-with-animation="true" class="scroll-container">
+    <view class="-ui-title">{{chapter.title}}</view>
+    <view class="-ui-line"></view>
+    <view class="-ui-subtitle">
+      <template is="wxParse" data="{{wxParseData:article.nodes}}"/>
+    </view>
+  </scroll-view>
+
+  <view style="width:100%">
+    <view class="-ui-line"></view>
+    <view class="-ui-subtitle">
+      <view class="footbar">
+          作者: {{chapter.author}}
+          日期: {{chapter.date}}
       </view>
-    </swiper-item>
+    </view>
   </view>
-</swiper>
+</view>

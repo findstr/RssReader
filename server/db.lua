@@ -9,6 +9,7 @@ function M.start()
 	db, err= redis:connect {
 		addr = assert(env.get("dbport"))
 	}
+	db:select(12)
 	assert(db, err)
 end
 
