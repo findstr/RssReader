@@ -48,9 +48,9 @@ local function rss_read(content)
 		end
 	end
 	local ok, err = pcall(RSS.parse, content, channel, item)
-	log.print("RSS.parse", ok, count)
+	log.print("RSS.parse", ok, err, count)
 	if not ok then
-		assert(find(err, "finish"), err)
+		assert(count > 0, "RSS源解析失败")
 	end
 	return chapter, count, link, title
 end
@@ -151,7 +151,7 @@ dispatch["/rsslist/add"] = function(req, body, write)
 	--parse rss xml
 	local ok, title, rssid, link = pcall(rss_add, uid, dbk_siteid, rss, body)
 	if not ok then
-		local ack = format([[{"errmsg":"保存RSS文章失败 错误码:%s"]], title)
+		local ack = format([[{"errmsg":"保存RSS文章失败 错误码:%s"}]], title)
 		return write(400, HEAD, ack)
 	end
 	--ack
