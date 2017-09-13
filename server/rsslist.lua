@@ -201,6 +201,9 @@ dispatch["/rsslist/del"] = function(req, body, write)
 	local ok, chaplist = db:zrangebyscore(
 		format(dbk_rss_chlist, uid), rssid, rssid)
 	assert(ok, chaplist)
+	if type(chaplist) ~= "table" then
+		chaplist = {chaplist}
+	end
 	--clear rss_url
 	local cmd = {}
 	local out = {}
