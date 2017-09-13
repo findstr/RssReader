@@ -65,31 +65,10 @@ Page({
   },
 
   /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload: function () {
-
-  },
-
-  /**
    * 页面相关事件处理函数--监听用户下拉动作
    */
   onPullDownRefresh: function () {
     this.refreshList()
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom: function () {
-
   },
 
   /**
@@ -126,14 +105,17 @@ Page({
       },
       dataType: "json",
       success: function (res) {
+        if (res.statusCode != 200) {
+          wx.showModal({
+            title: '提示',
+            content: res.data.errmsg,
+            showCancel: false
+          })
+        }
         wx.hideLoading()
       },
       fail: function (res) {
-        wx.showModal({
-          title: '提示',
-          content: res.data.errmsg,
-          showCancel: false
-        })
+        console.log(e)
       }
     })
     console.log("onRemove", idx)
@@ -172,19 +154,23 @@ Page({
           },
           dataType: "json",
           success: function (res) {
-            var len = that.data.rss.length
-            var param = {}
-            param["rss["+len+"]"] = res.data
-            console.log(res)
-            that.setData(param)
+            if (res.statusCode == 200) {
+              var len = that.data.rss.length
+              var param = {}
+              param["rss[" + len + "]"] = res.data
+              console.log(res)
+              that.setData(param)
+            } else {
+              wx.showModal({
+                title: '提示',
+                content: res.data.errmsg,
+                showCancel: false
+              })
+            }
             wx.hideLoading()
           },
           fail: function (res) {
-            wx.showModal({
-              title: '提示',
-              content: res.data.errmsg,
-              showCancel: false
-            })
+            console.log(res)
           }
         })
       }

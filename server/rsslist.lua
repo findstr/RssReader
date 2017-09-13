@@ -125,12 +125,12 @@ dispatch["/rsslist/add"] = function(req, body, write)
 	local HEAD = {}
 	local param = {}
 	tool.jsondecode(body, param)
-	log.print("/rsslist/add uid:", param.uid, "rss:", param.rss)
 	local uid = param.uid
 	local rss = param.rss
 	local dbk_siteid = format(dbk_rss_siteid, uid)
 	--check exist
-	local ok, rssid = db:hget(dbk_setid, rss)
+	log.print("/rsslist/add uid:", param.uid, dbk_siteid, rss)
+	local ok, rssid = db:hget(dbk_siteid, rss)
 	if ok then
 		local ack = [[{"errmsg":"要订阅的内容已存在"}]]
 		return write(400, HEAD, ack)
