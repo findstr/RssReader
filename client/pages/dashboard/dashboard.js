@@ -84,15 +84,14 @@ Page({
     this.rss_subscribe_url = e.detail.value
   },
   onRemove: function(e) {
+    var that = this
     var uid = app.getuid()
     var idx = e.target.dataset.index
     this.resetItem(-1)  //force reset
     var rss = this.data.rss
     var item = rss[idx]
-    rss.splice(idx, 1)
-    this.setData({"rss":rss})
     var url_ = config.requrl + "/rsslist/del"
-    console.log(item.rssid)
+    console.log("rssid", item.rssid)
     wx.request({
       url: url_,
       method: "POST",
@@ -111,6 +110,9 @@ Page({
             content: res.data.errmsg,
             showCancel: false
           })
+        } else {
+          rss.splice(idx, 1)
+          that.setData({ "rss": rss })
         }
         wx.hideLoading()
       },
@@ -154,6 +156,7 @@ Page({
           },
           dataType: "json",
           success: function (res) {
+            console.log(res)
             if (res.statusCode == 200) {
               var len = that.data.rss.length
               var param = {}
