@@ -7,7 +7,7 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "rgb(39,41,46)",
+    "navigationBarBackgroundColor": "#27292E",
     "navigationBarTitleText": "文章列表",
     "navigationBarTextStyle": "white",
     "enablePullDownRefresh": true,
