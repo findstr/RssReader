@@ -11,7 +11,7 @@
   <view style="width:100%">
     <view class="-ui-line"></view>
     <view class="-ui-subtitle">
-      <view class="footbar">
+      <view class="footbar" bindtap="docopy">
           作者: {{chapter.author}}
           日期: {{chapter.date}}
       </view>

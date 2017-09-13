@@ -1,7 +1,11 @@
 local SLAXML = require "slaxml"
 local M = {}
 
-function M.parse(content, channel, item)
+local gsub = string.gsub
+local match = string.gmatch
+local format = string.format
+
+local function rss2_0(content, channel, item)
 	local one = nil
 	local key = nil
 	local need = {
@@ -28,6 +32,10 @@ function M.parse(content, channel, item)
 		end,
 		closeElement = function(name, nsURI)
 			if name == "item" then
+				if not one.guid then
+					one.guid = one.link
+				end
+				one.pubDate = gsub(one.pubDate, "%+%d+", "")
 				item(one)
 				one = nil
 			end
@@ -42,6 +50,93 @@ function M.parse(content, channel, item)
 		end,
 	}
 	parser:parse(content, {stripWhitespace=true})
+
+end
+
+local function atom(content, channel, item)
+	local one = nil
+	local lastkey = nil
+	local key = nil
+	local author = nil
+	local need = {
+		["channel"] = "channel",
+		["title"] = "title",
+		["id"] = "guid",
+		["link"] = "link",
+		["updated"] = "pubDate",
+		["summary"] = "description",
+		["content"] = "content",
+		["author"] = "author",
+	}
+
+	local parser = SLAXML:parser {
+		startElement = function(name, nsURI, nsPrefix)
+			if nsPrefix then
+				name = nsPrefix .. ":" .. name
+			end
+			if name == "entry" then
+				one = {}
+			else
+				lastkey = key
+				key = need[name]
+			end
+		end,
+		closeElement = function(name, nsURI)
+			if name == "entry" then
+				if not one.guid then
+					one.guid = one.link
+				end
+				if not one.author then
+					one.author = author
+				end
+				local Y, M, D, H, M, S = match(one.pubDate,
+					"(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)")
+				one.pubDate = format("%s-%s-%s %s:%s:%s",
+					Y, M, D, H, M, S)
+				item(one)
+				one = nil
+			end
+			key = nil
+			if lastkey == need[name] then
+				lastkey = nil
+			end
+		end,
+		attribute  = function(name,value,nsURI,nsPrefix)
+			if nsPrefix then
+				name = nsPrefix .. ":" .. name
+			end
+			if key == "link" and name == "href" then
+				if one then
+					one["link"] = value
+				else
+					channel("link", value)
+				end
+			end
+                end,
+		text = function(text)
+			if one and key then
+				one[key] = text
+			elseif lastkey == "author" then
+				if one then
+					one["author"] = text
+				else
+					author = text
+				end
+			elseif key == "title" then
+				channel(key, text)
+			end
+		end,
+	}
+	parser:parse(content, {stripWhitespace=true})
+end
+
+local find = string.find
+function M.parse(content, channel, item)
+	if find(content, "<rss") then
+		rss2_0(content, channel, item)
+	else
+		atom(content, channel, item)
+	end
 end
 --[[
 local f = io.open("feed.xml", "r")

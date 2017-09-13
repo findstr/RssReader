@@ -59,41 +59,26 @@ Page({
         title: '数据加载中',
         mask: true
       })
-    }
+    }    
+  },
 
-
-    this.setData({
-      "chapter":app.globalData.chapter[options.id]
+  docopy: function() {
+    var ch = this.data.chapter
+    if (ch == undefined)
+      return
+    if (ch.link == undefined)
+      return
+    wx.setClipboardData({
+      data: ch.link,
+      success: function (res) {
+        wx.showToast({
+          title: '已复制文章链接',
+          icon: 'success',
+          duration: 1000
+        })
+      }
     })
-    
-  },
-
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload: function () {
-
+    console.log("url:" + ch)
   },
 
   /**

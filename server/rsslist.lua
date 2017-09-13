@@ -34,9 +34,6 @@ local function rss_read(content)
 	local item = function(p)
 		count = count + 1
 		chapter[count] = p
-		if not p.guid then
-			p.guid = p.link
-		end
 		if count > limit_chapter then
 			assert(false, "finish")
 		end
@@ -145,6 +142,7 @@ dispatch["/rsslist/add"] = function(req, body, write)
 		return write(400, HEAD, ack)
 	end
 	--fetch rss xml
+	print("rss", rss)
 	local status, head, body = tool.httpget(rss)
 	if status ~= 200 then
 		local ack = format([[{"errmsg":"获取RSS内容失败 错误码:%s"]], status)
@@ -452,8 +450,5 @@ local function page_update()
 	end
 	core.timeout(limit_update, page_update)
 end
-core.start(function()
-	page_update()
-end)
---core.timeout(limit_update, page_update)
+core.timeout(limit_update, page_update)
 
