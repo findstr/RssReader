@@ -17,7 +17,7 @@
   <view class="rss-add">
     <image class="rss-image" src="image/icon_add.png" style="width:32px;height:32px"></image>
     <view class="rss-add-info">
-      <input class="rss-add-input" bindinput="onRssInput" type="text" value="https://coolshell.cn/feed" placeholder="要订阅的RSS地址"></input>
+      <input class="rss-add-input" bindinput="onRssInput" type="text" placeholder="要订阅的RSS地址"></input>
     </view>
     <button type="primary" class="-ui-button" size="10px" bindtap="onSave">保存</button>
   </view>

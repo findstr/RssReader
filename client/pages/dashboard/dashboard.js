@@ -78,7 +78,7 @@ Page({
 
   },
   //logic
-  rss_subscribe_url:"http://blog.gotocoding.com/feed",
+  rss_subscribe_url:"",
 
   onRssInput: function(e) {
     this.rss_subscribe_url = e.detail.value
