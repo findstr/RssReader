@@ -41,7 +41,7 @@ M.escapejson = encode
 
 function M.httpget(url, header)
 	header = header or  {}
-	--header[#header + 1] = "Accept-Encoding: gzip, deflate"
+	header[#header + 1] = "Accept-Encoding: gzip, deflate"
 	local status, head, body, ver = client.GET(url)
 	if head and head["Content-Encoding"] == "gzip" then
 		body = gzip.inflate(body)
