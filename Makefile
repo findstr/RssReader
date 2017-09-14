@@ -10,12 +10,16 @@ CCFLAG += -I./silly/lua/
 
 all:\
 	$(LUACPATH)\
-	$(LUACPATH)/gzip.so
+	$(LUACPATH)/gzip.so\
+	$(LUACPATH)/iconv.so\
 
 $(LUACPATH):
 	mkdir $(LUACPATH)
 
 $(LUACPATH)/gzip.so:lualib-src/lgzip.c $(ZLIBPATH)/libz.a
+	$(CC) $(CCFLAG) -o $@ $^ $(SHARED)
+
+$(LUACPATH)/iconv.so:lualib-src/luaiconv.c
 	$(CC) $(CCFLAG) -o $@ $^ $(SHARED)
 
 $(ZLIBPATH)/libz.a:$(ZLIBPATH)/Makefile

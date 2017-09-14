@@ -1,9 +1,15 @@
 local SLAXML = require "slaxml"
+local iconv = require "iconv"
 local M = {}
 
 local gsub = string.gsub
-local match = string.gmatch
+local gmatch = string.gmatch
+local match = string.match
 local format = string.format
+local find = string.find
+
+local pool = {}
+setmetatable(pool, {__mode="kv"})
 
 local function rss2_0(content, channel, item)
 	local one = nil
@@ -19,6 +25,17 @@ local function rss2_0(content, channel, item)
 		["dc:creator"] = "author",
 	}
 
+	local _, stop = find(content, "?>")
+	assert(stop, content)
+	local hdr = content:sub(1, stop)
+	local encoding = match(hdr, 'encoding="([^"]+)"')
+	assert(encoding, hdr)
+	encoding = string.lower(encoding)
+	if encoding ~= "utf-8" then
+		local cd = iconv.open("utf-8", encoding)
+		body, err = cd:iconv(body)
+		assert(body, err)
+	end
 	local parser = SLAXML:parser {
 		startElement = function(name, nsURI, nsPrefix)
 			if nsPrefix then
@@ -89,7 +106,7 @@ local function atom(content, channel, item)
 				if not one.author then
 					one.author = author
 				end
-				local Y, M, D, H, M, S = match(one.pubDate,
+				local Y, M, D, H, M, S = gmatch(one.pubDate,
 					"(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)")
 				one.pubDate = format("%s-%s-%s %s:%s:%s",
 					Y, M, D, H, M, S)
@@ -130,7 +147,6 @@ local function atom(content, channel, item)
 	parser:parse(content, {stripWhitespace=true})
 end
 
-local find = string.find
 function M.parse(content, channel, item)
 	if find(content, "<rss") then
 		rss2_0(content, channel, item)
@@ -148,5 +164,6 @@ M.parse(content, function(item)
 	return false
 end)
 ]]--
+
 return M
 
