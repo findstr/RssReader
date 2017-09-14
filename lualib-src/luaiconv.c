@@ -125,7 +125,6 @@ static int Liconv(lua_State *L) {
 
     do {
         ret = iconv(cd, &inbuf, &ibleft, &outbuf, &obleft);
-	printf("conv :%d\n", ret);
         if (ret == (size_t)(-1)) {
             lua_pushlstring(L, outbufs, obsize - obleft);
             if (hasone == 1)
