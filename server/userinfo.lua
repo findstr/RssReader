@@ -11,13 +11,12 @@ local dbk_account_weid = "account:weid"
 local dbk_account_uid = "account:uid"
 
 local function genid()
-	local ok, id = db:get(dbk_account_id)
-	if ok then
-		return id
-	end
-	db:set(dbk_account_id, 10000)
-	ok, id = db:incr(dbk_account_id)
+	local ok, id = db:incr(dbk_account_id)
 	assert(ok, id)
+	if id == 1 then
+		id = "10000"
+		db:set(dbk_account_id, id)
+	end
 	return id
 end
 
