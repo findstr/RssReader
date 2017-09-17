@@ -7,9 +7,9 @@ local db
 function M.start()
 	local err
 	db, err= redis:connect {
-		addr = assert(env.get("dbport"))
+		addr = assert(env.get("dbport")),
+		db = 12,
 	}
-	db:select(12)
 	assert(db, err)
 end
 

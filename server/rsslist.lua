@@ -241,7 +241,9 @@ dispatch["/page/get"] = function(req, body, write)
 		res = {res}
 	end
 	table.sort(res, function(a, b)
-		return a > b
+		local x = tonumber(a)
+		local y = tonumber(b)
+		return x > y
 	end)
 	local i = 1
 	for _, v in pairs(res) do
