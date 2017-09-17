@@ -118,7 +118,7 @@ local function atom(content, channel, item)
 				if not one.author then
 					one.author = author
 				end
-				local Y, M, D, H, M, S = gmatch(one.pubDate,
+				local Y, M, D, H, M, S = match(one.pubDate,
 					"(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)")
 				one.pubDate = format("%s-%s-%s %s:%s:%s",
 					Y, M, D, H, M, S)
