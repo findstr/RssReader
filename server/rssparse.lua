@@ -33,8 +33,8 @@ local function rss2_0(content, channel, item)
 	encoding = string.lower(encoding)
 	if encoding ~= "utf-8" then
 		local cd = iconv.open("utf-8", encoding)
-		body, err = cd:iconv(body)
-		assert(body, err)
+		content, err = cd:iconv(content)
+		assert(content, err)
 	end
 	local parser = SLAXML:parser {
 		startElement = function(name, nsURI, nsPrefix)
@@ -85,6 +85,18 @@ local function atom(content, channel, item)
 		["content"] = "content",
 		["author"] = "author",
 	}
+
+	local _, stop = find(content, "?>")
+	assert(stop, content)
+	local hdr = content:sub(1, stop)
+	local encoding = match(hdr, 'encoding="([^"]+)"')
+	assert(encoding, hdr)
+	encoding = string.lower(encoding)
+	if encoding ~= "utf-8" then
+		local cd = iconv.open("utf-8", encoding)
+		content, err = cd:iconv(content)
+		assert(content, err)
+	end
 
 	local parser = SLAXML:parser {
 		startElement = function(name, nsURI, nsPrefix)
