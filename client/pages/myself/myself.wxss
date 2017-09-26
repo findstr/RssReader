@@ -16,3 +16,9 @@
   margin-top:20rpx;
   color: #aaa;
 }
+
+.-ui-button {
+  margin-top:30rpx;
+  width:90%;
+  font-size:13px;
+}

@@ -6,19 +6,84 @@ var config = require("../common/config.js")
 Page({
   data: {
     more:true,
-    chapter:[]
+    chapter:[],
+    chapter_display:[],
+    filter_type: 1,//1 显示所有，2 显示未读 3 显示已读
+    filter_title:"显示所有文章列表",
+    filter_hide: true,
+    filter_name: [
+      { text: "显示所有文章列表", bindtap: "showAll" },
+      { text: "显示未读文章列表", bindtap: "showUnread" },
+      { text: "显示已读文单列表", bindtap: "showReaded" }
+    ]
   },
-  //事件处理函数
-  bindViewTap: function() {
-    wx.navigateTo({
-      url: '../logs/logs'
+
+  FilterSheetTap: function () {
+    this.setData({
+      filter_hide: !this.data.filter_hide
     })
   },
+
+  showAll: function () {
+    //1 显示所有，2 显示未读 3 显示已读
+    this.setData({ "filter_type": 1,"filter_title":this.data.filter_name[0].text})
+    this.FilterSheetTap()
+    this.refreshDisplay()
+  },
+  showUnread: function () {
+    //1 显示所有，2 显示未读 3 显示已读
+    this.setData({ "filter_type": 2, "filter_title": this.data.filter_name[1].text})
+    this.FilterSheetTap()
+    this.refreshDisplay()
+  },
+  showReaded: function () {
+    //1 显示所有，2 显示未读 3 显示已读
+    this.setData({ "filter_type": 3, "filter_title": this.data.filter_name[2].text})
+    this.FilterSheetTap()
+    this.refreshDisplay()
+  },
+  FilterSheetCancel: function() {
+    this.FilterSheetTap()
+  },
+
   onLoad: function () {
     var that = this
     app.login(function () {
-      that.refreshFrom(0)
+      that.refreshFrom(0, function() {
+        that.refreshDisplay()
+      })
     })
+  },
+
+  onShow: function () {
+    this.refreshDisplay()
+  },
+
+  refreshDisplay: function() {
+    var t = this.data.filter_type
+    console.log("t:"+t)
+    if (t == 1) {//显示所有
+      this.setData({"chapter_display": this.data.chapter})
+    } else {
+      var chapter = this.data.chapter
+      var display = new Array(chapter.length)
+      var push = 0
+      for (var i = 0; i < chapter.length; i++) {
+        var item = chapter[i]
+        if (!item.read && t == 2) {//显示未读
+          display[push] = item
+          item.index = i
+          push++;
+        } else if ((item.read) && t == 3) {//显示已读
+          display[push] = item
+          item.index = i
+          push++;
+        }
+      }
+      var display = display.slice(0, push)
+      console.log("push:" + push + ":" + chapter.length + ":" + display.length)
+      this.setData({ "chapter_display": display })
+    }
   },
 
   refreshIdx: 0,
@@ -75,8 +140,6 @@ Page({
     })
   },
 
-  onShow: function() {
-  },
   //logic
   ctrl_jump:false,
   onHide: function () {
@@ -119,8 +182,10 @@ Page({
     this.ctrl_jump = true
     var that = this
     app.savechapter(this.data.chapter)
-    var url_ = "../single/single?" + "id=" + touchid
-    var chapter = this.data.chapter[touchid];
+    var chapter = this.data.chapter_display[touchid];
+    console.log("readed:")
+    console.log(chapter)
+    var url_ = "../single/single?" + "id=" + chapter.index
     console.log(chapter)
     if (chapter.read == false) {
       var mark_url_ = config.requrl + "/page/read"
@@ -134,7 +199,7 @@ Page({
         },
       })
       var param = {}
-      param['chapter['+touchid+'].read'] = true
+      param['chapter[' + chapter.index +'].read'] = true
       that.setData(param)
     }
     wx.navigateTo({

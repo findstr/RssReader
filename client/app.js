@@ -3,7 +3,7 @@ var config = require('./pages/common/config.js')
 App({
   globalData: {
     userInfo: null,
-    chapter:null
+    chapter: null,
   },
   savechapter:function (ch) {
     this.globalData.chapter = ch

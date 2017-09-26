@@ -1,14 +1,21 @@
 <!--index.wxml-->
 <view class="chapter-list">
-    <view wx:for="{{chapter}}" wx:key="index">
-      <view class="{{item.style}}"
-          bindtouchstart="touchS" 
-          bindtouchmove="touchM"
-          bindtouchend="touchE" 
-          data-index="{{index}}">
-          <view class="{{item.read ? '-ui-title-read':'-ui-title'}}" data-index="{{index}}">
-            {{item.title}}
-          </view>
-      </view>
+  <button type="default" class="-ui-button" bindtap="FilterSheetTap">{{filter_title}}</button>
+  <action-sheet hidden="{{filter_hide}}" bindchange="FilterSheetCancel">
+      <block wx:for-items="{{filter_name}}" wx:key="item">
+          <action-sheet-item bindtap="{{item.bindtap}}">{{item.text}}</action-sheet-item>
+      </block>
+      <action-sheet-cancel class="cancel">取消</action-sheet-cancel>
+  </action-sheet>
+  <view wx:for="{{chapter_display}}" wx:key="index">
+    <view class="{{item.style}}"
+        bindtouchstart="touchS" 
+        bindtouchmove="touchM"
+        bindtouchend="touchE" 
+        data-index="{{index}}">
+        <view class="{{item.read ? '-ui-title-read':'-ui-title'}}" data-index="{{index}}">
+          {{item.title}}
+        </view>
     </view>
+  </view>
 </view>
