@@ -291,7 +291,6 @@ dispatch["/page/detail"] = function(req, body, write)
 	log.print("/page/detail uid:", uid, "cid:", cid)
 	local dbk = format(dbk_rss_chapter, uid, cid)
 	local ok, res = db:hmget(dbk, "content", "author", "pubDate", "link")
-	print("detail", dbk, ok, res[1], res[2], res[3], res[4])
 	assert(ok, res)
 	local body = format('{"content":"%s","author":"%s","date":"%s","link":"%s"}',
 		tool.escapejson(res[1]),
