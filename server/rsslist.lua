@@ -34,6 +34,12 @@ local function rss_read(content)
 	local item = function(p)
 		count = count + 1
 		chapter[count] = p
+		if not p.content then
+			p.content = p.description ..
+			[[<p>------------------------------</p>
+			<p>网站RSS未全文输出</p>
+			<p>请点击作者名，粘贴链接在浏览器查看"]]
+		end
 		if count > limit_chapter then
 			assert(false, "finish")
 		end
@@ -285,6 +291,7 @@ dispatch["/page/detail"] = function(req, body, write)
 	log.print("/page/detail uid:", uid, "cid:", cid)
 	local dbk = format(dbk_rss_chapter, uid, cid)
 	local ok, res = db:hmget(dbk, "content", "author", "pubDate", "link")
+	print("detail", dbk, ok, res[1], res[2], res[3], res[4])
 	assert(ok, res)
 	local body = format('{"content":"%s","author":"%s","date":"%s","link":"%s"}',
 		tool.escapejson(res[1]),
