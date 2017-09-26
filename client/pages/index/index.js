@@ -72,11 +72,9 @@ Page({
         var item = chapter[i]
         if (!item.read && t == 2) {//显示未读
           display[push] = item
-          item.index = i
           push++;
         } else if ((item.read) && t == 3) {//显示已读
           display[push] = item
-          item.index = i
           push++;
         }
       }
@@ -106,10 +104,13 @@ Page({
           dat[i].style = "chapter-item"
         }
         var dst
-        if (idx == 0)
+        for (var i = idx; i < dat.length + idx; i++)
+          dat[i].index = i
+        if (idx == 0) {
           dst = dat
-        else
+        } else {
           dst = that.data.chapter.concat(dat)
+        }
         that.setData({
           "chapter": dst
         })
@@ -134,8 +135,10 @@ Page({
    */
   onPullDownRefresh: function () {
     this.refreshIdx = 0
+    var that = this
     console.log("pullUpper")
     this.refreshFrom(0, function() {
+      that.refreshDisplay()
       wx.stopPullDownRefresh()
     })
   },
