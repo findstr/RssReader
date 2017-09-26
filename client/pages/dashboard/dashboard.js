@@ -127,6 +127,8 @@ Page({
     var that = this
     this.resetItem(-1)  //force reset
     var url = this.rss_subscribe_url
+    if (!(url.substr(0, 7).toLowerCase() == "http://" || url.substr(0, 8).toLowerCase() == "https://"))
+      url = "http://" + url;
     console.log("onSave:" + url)
     if (url == "") {
       wx.showModal({

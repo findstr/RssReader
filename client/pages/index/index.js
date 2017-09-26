@@ -140,6 +140,9 @@ Page({
     wx.navigateTo({
       url: url_
     })
+  },
+  onShareAppMessage: function () {
+
   }
 
 })

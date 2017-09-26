@@ -33,7 +33,8 @@
   transform: scale(0.98);  
 }
 
-.-ui-title, .-ui-title-read {
+.-ui-title-read {
+  color:#737373;
   font-size:13px;
 }
 

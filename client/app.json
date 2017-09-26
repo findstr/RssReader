@@ -3,7 +3,8 @@
     "pages/index/index",
     "pages/dashboard/dashboard",
     "pages/single/single",
-    "pages/logs/logs"
+    "pages/myself/myself"
+
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -29,7 +30,13 @@
         "pagePath": "pages/dashboard/dashboard",
         "iconPath": "image/icon_plus.png",
         "selectedIconPath": "image/icon_plus_select.png",
-        "text": "管理"
+        "text": "添加"
+      },
+      {
+        "pagePath": "pages/myself/myself",
+        "iconPath": "image/icon_self.png",
+        "selectedIconPath": "image/icon_self_select.png",
+        "text": "我"
       }
     ]
   }
