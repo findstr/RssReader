@@ -1,19 +1,39 @@
-/* pages/myself/myself.wxss */
+@import "../common/ui.wxss";
+
 .userinfo {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
+.userinfo-block, .issue-item{
+  margin-top:30rpx;
+  border:3rpx;
+  border-radius: 2rpx;
+  min-height:30rpx;
+
+  padding-top:10rpx;
+  padding-bottom:10rpx;
+  padding-left:50rpx;
+  padding-right:5rpx;
+
+  background:white;
+  flex-direction: row;
+  
+  display:flex;
+  align-items:center;
+}
+
 .userinfo-avatar {
-  margin-top: 30rpx;
   width: 128rpx;
   height: 128rpx;
-  border-radius: 50%;
+  border-radius: 10rpx;
 }
 
 .userinfo-nickname {
-  margin-top:20rpx;
+  font-size: 30rpx;
+  margin-left:80rpx;
+  align-content: center;
   color: #aaa;
 }
 
@@ -22,3 +42,11 @@
   width:90%;
   font-size:13px;
 }
+
+.issue-item {
+  flex-direction: column;
+  align-items:left;
+  padding-top:30rpx;
+  padding-bottom:30rpx;
+}
+

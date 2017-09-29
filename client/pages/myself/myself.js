@@ -7,8 +7,21 @@ Page({
     userInfo: {},
     hasUserInfo: false,
     canIUse: wx.canIUse('button.open-type.getUserInfo'),
+    issue: "https://github.com/findstr/RssReader/issues"
   },
-
+  docopy: function () {
+    wx.setClipboardData({
+      data: this.data.issue,
+      success: function (res) {
+        wx.showModal({
+          title: '提示',
+          content: '已复制issue链接, 谢谢前往描述问题~',
+          icon: 'success',
+          showCancel: false,
+        })
+      }
+    })
+  },
   onLoad: function (options) {
     if (app.globalData.userInfo) {
       this.setData({

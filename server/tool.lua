@@ -39,6 +39,15 @@ end
 
 M.escapejson = encode
 
+M.escapehtml = function(input)
+	local tbl = {
+		"<script[^<]+</script>",
+		"<ins [^<]+</ins>",
+	}
+	input = gsub(input, tbl[1], "")
+	return gsub(input, tbl[2], "")
+end
+
 function M.httpget(url, header)
 	header = header or  {}
 	header[#header + 1] = "Accept-Encoding: gzip, deflate"

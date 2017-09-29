@@ -26,6 +26,13 @@ local dbk_rss_site = "rss:%s:site:%s"
 -- "*hset title/link/pubdate/content/read
 local dbk_rss_chapter = "rss:%s:chapter:%s"
 
+local function build_content(input)
+	return  input ..
+		[[<p>------------------------------</p>
+		<p>网站RSS未全文输出</p>
+		<p>请点击作者名，粘贴链接在浏览器查看"]]
+end
+
 local function rss_read(content)
 	local count = 0
 	local title = nil
@@ -35,10 +42,14 @@ local function rss_read(content)
 		count = count + 1
 		chapter[count] = p
 		if not p.content then
-			p.content = p.description ..
-			[[<p>------------------------------</p>
-			<p>网站RSS未全文输出</p>
-			<p>请点击作者名，粘贴链接在浏览器查看"]]
+			local status, head, body = tool.httpget(p.link)
+			if body then
+				p.content = tool.escapehtml(body)
+				core.sleep(1000)
+			end
+		end
+		if not p.content then
+			p.content = build_content(p.description)
 		end
 		if count > limit_chapter then
 			assert(false, "finish")
@@ -288,10 +299,26 @@ dispatch["/page/detail"] = function(req, body, write)
 	tool.jsondecode(body, param)
 	local uid = param.uid
 	local cid = param.cid
-	log.print("/page/detail uid:", uid, "cid:", cid)
+	local needcontent = param.content == "true"
+	print("body", body)
+	log.print("/page/detail uid:", uid, "cid:", cid, "needcontent:", needcontent)
 	local dbk = format(dbk_rss_chapter, uid, cid)
-	local ok, res = db:hmget(dbk, "content", "author", "pubDate", "link")
-	assert(ok, res)
+	local content_key
+	if not needcontent then
+		content_key = "description"
+	else
+		content_key = "content"
+	end
+	local ok, res = db:hmget(dbk, content_key, "author", "pubDate", "link")
+	for k, v in pairs(res) do
+		if not v then
+			res[k] = "nil"
+		end
+	end
+	if not needcontent then
+		res[1] = build_content(res[1])
+	end
+	print("res[1]", content_key)
 	local body = format('{"content":"%s","author":"%s","date":"%s","link":"%s"}',
 		tool.escapejson(res[1]),
 		tool.escapejson(res[2]),
