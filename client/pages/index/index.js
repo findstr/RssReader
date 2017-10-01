@@ -19,28 +19,30 @@ Page({
   },
 
   FilterSheetTap: function () {
+    var typ = wx.setStorageSync("filter_type", this.data.filter_type)
     this.setData({
       filter_hide: !this.data.filter_hide
     })
   },
-
-  showAll: function () {
+  setFilterSilence: function(typ) {
     //1 显示所有，2 显示未读 3 显示已读
-    this.setData({ "filter_type": 1,"filter_title":this.data.filter_name[0].text})
+    this.setData({ "filter_type": typ, "filter_title": this.data.filter_name[typ - 1].text })
+    this.refreshDisplay()
+  },
+  setFilter: function(typ) {
+    //1 显示所有，2 显示未读 3 显示已读
+    this.setData({ "filter_type": typ, "filter_title": this.data.filter_name[typ - 1].text })
     this.FilterSheetTap()
     this.refreshDisplay()
+  },
+  showAll: function () {
+    this.setFilter(1)
   },
   showUnread: function () {
-    //1 显示所有，2 显示未读 3 显示已读
-    this.setData({ "filter_type": 2, "filter_title": this.data.filter_name[1].text})
-    this.FilterSheetTap()
-    this.refreshDisplay()
+    this.setFilter(2)
   },
   showReaded: function () {
-    //1 显示所有，2 显示未读 3 显示已读
-    this.setData({ "filter_type": 3, "filter_title": this.data.filter_name[2].text})
-    this.FilterSheetTap()
-    this.refreshDisplay()
+    this.setFilter(3)
   },
   FilterSheetCancel: function() {
     this.FilterSheetTap()
@@ -49,6 +51,9 @@ Page({
   onLoad: function () {
     var that = this
     app.login(function () {
+      var typ = wx.getStorageSync("filter_type")
+      if (typ != undefined && typ != "")
+        that.setFilterSilence(typ)
       that.refreshFrom(0, function() {
         that.refreshDisplay()
       })

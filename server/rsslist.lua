@@ -266,13 +266,17 @@ dispatch["/page/get"] = function(req, body, write)
 	for _, v in pairs(res) do
 		local dbk = format(dbk_rss_chapter, uid, v)
 		local ok, tbl = db:hmget(dbk, "title", "read")
-		assert(tbl)
+		assert(ok, tbl)
 		local title = tbl[1]
 		local read = tbl[2] and true or false
-		title = tool.escapejson(title)
-		out[i] = format([[{"title":"%s","cid":"%s","read":%s}]],
-				title, v, read)
-		i = i + 1
+		if title then
+			title = tool.escapejson(title)
+			out[i] = format([[{"title":"%s","cid":"%s","read":%s}]],
+					title, v, read)
+			i = i + 1
+		else
+			core.log("/page/get skip", dbk, v)
+		end
 	end
 	local head = {}
 	local body = format("[%s]", table.concat(out, ","))
