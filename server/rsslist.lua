@@ -266,7 +266,7 @@ dispatch["/page/get"] = function(req, body, write)
 	for _, v in pairs(res) do
 		local dbk = format(dbk_rss_chapter, uid, v)
 		local ok, tbl = db:hmget(dbk, "title", "read")
-		assert(ok, tbl)
+		assert(tbl)
 		local title = tbl[1]
 		local read = tbl[2] and true or false
 		if title then
