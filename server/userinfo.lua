@@ -1,6 +1,4 @@
-local core = require "silly.core"
-local env = require "silly.env"
-local log = require "log"
+local core = require "sys.core"
 local dispatch = require "router"
 local format = string.format
 local tool = require "tool"
@@ -20,14 +18,14 @@ local function genid()
 	return id
 end
 
-local appid = assert(env.get("appid"), "appid")
-local secret = assert(env.get("secret"), "secret")
+local appid = assert(core.envget("appid"), "appid")
+local secret = assert(core.envget("secret"), "secret")
 local fmt_weid_url = 'https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code'
 
 local function weid(code)
 	local ack = {}
 	local status, header, body = tool.httpget(format(fmt_weid_url,appid, secret, code))
-	log.print(body)
+	core.log(body)
 	tool.jsondecode(body, ack)
 	return ack.openid
 end
@@ -38,7 +36,7 @@ dispatch["/userinfo/getid"] = function(req, body, write)
 	local code = req.form['code']
 	local wid = weid(code)
 	local ok, uid = db:hget(dbk_account_weid, wid)
-	log.print("/userinfo/getid", code, uid, wid)
+	core.log("/userinfo/getid", code, uid, wid)
 	if not ok then
 		uid = genid()
 		db:hset(dbk_account_weid, wid, uid)
@@ -54,7 +52,7 @@ function M.getall()
 	local out = {}
 	local ok, res = db:hgetall(dbk_account_uid)
 	if not ok then
-		log.print(res)
+		core.log(res)
 		return out
 	end
 	local outi = 1

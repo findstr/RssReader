@@ -1,14 +1,10 @@
-local core = require "silly.core"
-local env = require "silly.env"
+local core = require "sys.core"
+local dns = require "sys.dns"
 local server = require "http.server"
 local client = require "http.client"
-local log = require "log"
-local dns = require "dns"
 local gzip = require "gzip"
 local db = require "db"
 local dispatch = require "router"
-
-log.print = core.log
 
 dispatch["/"] = function(reqeust, body, write)
 	local body = [[
@@ -32,13 +28,13 @@ end
 local tool = require "tool"
 
 core.start(function()
-	dns.server("223.5.5.5@53")
+	dns.server("223.5.5.5:53")
 	db.start()
 	require "userinfo"
 	require "rsslist"
-	server.listen(assert(env.get("listen")), function(request, body, write)
-		log.print(request.uri)
-		log.print(request.version)
+	server.listen(assert(core.envget("listen")), function(request, body, write)
+		core.log(request.uri)
+		core.log(request.version)
 		local c = dispatch[request.uri]
 		if c then
 			c(request, body, write)

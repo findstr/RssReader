@@ -1,6 +1,4 @@
-local core = require "silly.core"
-local env = require "silly.env"
-local log = require "log"
+local core = require "sys.core"
 local dispatch = require "router"
 local format = string.format
 local find = string.find
@@ -11,9 +9,9 @@ local db = require "db" .instance()
 local userinfo = require "userinfo"
 local pcall = pcall
 
-local limit_rss = assert(env.get("limit_rss"), "limit_rss")
-local limit_chapter = assert(env.get("limit_chapter"), "limit_chapter")
-local limit_update = assert(env.get("limit_update"), "limit_update")
+local limit_rss = assert(core.envget("limit_rss"), "limit_rss")
+local limit_chapter = assert(core.envget("limit_chapter"), "limit_chapter")
+local limit_update = assert(core.envget("limit_update"), "limit_update")
 limit_rss = tonumber(limit_rss)
 limit_chapter = tonumber(limit_chapter)
 
@@ -65,7 +63,7 @@ local function rss_read(content)
 		end
 	end
 	local ok, err = pcall(RSS.parse, content, channel, item)
-	log.print("RSS.parse", ok, err, count)
+	core.log("RSS.parse", ok, err, count)
 	if not ok then
 		assert(count > 0, "RSS源解析失败")
 	end
@@ -100,7 +98,7 @@ local function chapter_save(uid, rssid, chapterid, chapter)
 			one[j] = dbv
 			j = j + 1
 		end
-		log.print("chapter_save", chapterid, v.title, v.link)
+		core.log("chapter_save", chapterid, v.title, v.link)
 		chapterid = chapterid - 1
 	end
 	if #chlist_cmd > 2 then
@@ -133,7 +131,7 @@ local function rss_add(uid, dbk_siteid, rss,  content)
 				"title", title,
 				"link", link)
 	assert(ok, err)
-	log.print("/rsslist/add", rss, rssid)
+	core.log("/rsslist/add", rss, rssid)
 	chapter_save(uid, rssid, rssid + count, chapter)
 	return title, rssid, link
 end
@@ -146,7 +144,7 @@ dispatch["/rsslist/add"] = function(req, body, write)
 	local rss = param.rss
 	local dbk_siteid = format(dbk_rss_siteid, uid)
 	--check exist
-	log.print("/rsslist/add uid:", param.uid, dbk_siteid, rss)
+	core.log("/rsslist/add uid:", param.uid, dbk_siteid, rss)
 	local ok, rssid = db:hget(dbk_siteid, rss)
 	if ok then
 		local ack = [[{"errmsg":"要订阅的内容已存在"}]]
@@ -173,7 +171,7 @@ dispatch["/rsslist/add"] = function(req, body, write)
 	end
 	--ack
 	local ack = format('{"title":"%s", "rssid":"%s", "link":"%s"}', title, rssid, link)
-	log.print(ack)
+	core.log(ack)
 	write(200, HEAD, ack)
 end
 
@@ -186,13 +184,13 @@ dispatch["/rsslist/get"] = function(req, body, write)
 	local arr = {}
 	local idx = 1
 	local dbk = format(dbk_rss_idsite, uid)
-	log.print("/rsslist/get uid:", uid, dbk)
+	core.log("/rsslist/get uid:", uid, dbk)
 	local ok, res = db:hgetall(dbk)
 	assert(ok)
 	for i = 1, #res, 2 do
 		local rssid = res[i]
 		local dbk = format(dbk_rss_site, uid, rssid)
-		log.print("dbk", dbk)
+		core.log("dbk", dbk)
 		local ok, rss = db:hmget(dbk, "title", "link")
 		assert(ok, rsstitle)
 		arr[idx] = format('{"title":"%s","link":"%s","rssid":"%s"}',
@@ -200,7 +198,7 @@ dispatch["/rsslist/get"] = function(req, body, write)
 		idx = idx + 1
 	end
 	local ack = format('[%s]', table.concat(arr, ","))
-	log.print(ack)
+	core.log(ack)
 	write(200, HEAD, ack)
 end
 
@@ -209,7 +207,7 @@ dispatch["/rsslist/del"] = function(req, body, write)
 	tool.jsondecode(body, param)
 	local uid = param.uid
 	local rssid = param.rssid
-	log.print("/rsslist/del uid:", uid, "rssid:", rssid)
+	core.log("/rsslist/del uid:", uid, "rssid:", rssid)
 	local dbk_siteid = format(dbk_rss_siteid, uid)
 	local dbk_idsite = format(dbk_rss_idsite, uid)
 	local ok, rssurl = db:hget(dbk_idsite, rssid)
@@ -250,7 +248,7 @@ dispatch["/page/get"] = function(req, body, write)
 	local uid = param.uid
 	local idx = param.index
 	local out = {}
-	log.print("/page/get uid:", uid, "index:", idx)
+	core.log("/page/get uid:", uid, "index:", idx)
 	local dbk_chlist = format(dbk_rss_chlist, uid)
 	local ok, res = db:zrange(dbk_chlist, 0, -1)
 	assert(ok, res)
@@ -292,7 +290,7 @@ dispatch["/page/read"] = function(req, body, write)
 	tool.jsondecode(body, param)
 	local uid = param.uid
 	local cid = param.cid
-	log.print('/page/read uid:', uid, 'cid:', cid)
+	core.log('/page/read uid:', uid, 'cid:', cid)
 	local dbk = format(dbk_rss_chapter, uid, cid)
 	db:hset(dbk, "read", "true")
 	write(200, {}, "")
@@ -305,7 +303,7 @@ dispatch["/page/detail"] = function(req, body, write)
 	local cid = param.cid
 	local needcontent = param.content == "true"
 	print("body", body)
-	log.print("/page/detail uid:", uid, "cid:", cid, "needcontent:", needcontent)
+	core.log("/page/detail uid:", uid, "cid:", cid, "needcontent:", needcontent)
 	local dbk = format(dbk_rss_chapter, uid, cid)
 	local content_key
 	if not needcontent then
@@ -400,7 +398,7 @@ local function update_one(uid)
 		local rssid = rss_[i + 1]
 		local status, head, body = tool.httpget(url)
 		if status ~= 200 then
-			log.print("page_update", status, head, body)
+			core.log("page_update", status, head, body)
 		else
 			local chapter = rss_read(body)
 			for i = 1, #chapter do
@@ -454,7 +452,7 @@ local function update_one(uid)
 			rem_chid[rem_i] = chid
 			zrem_i = zrem_i + 1
 			cmd_zrem[zrem_i] = chid
-			log.print("rem", chid)
+			core.log("rem", chid)
 			cmd_del[#cmd_del + 1] = {"del", format(dbk_rss_chapter, uid, i)}
 		end
 	end
@@ -463,7 +461,7 @@ local function update_one(uid)
 		rem_chid[rem_i] = chid
 		zrem_i = zrem_i + 1
 		cmd_zrem[zrem_i] = chid
-		log.print("rem", chid)
+		core.log("rem", chid)
 	end
 	if #cmd_zrem > 2 then
 		cmd_del[#cmd_del + 1] = cmd_zrem
@@ -477,18 +475,18 @@ local function update_one(uid)
 end
 
 local function safe_update()
-	log.print("update start")
+	core.log("update start")
 	local user = userinfo.getall()
 	for i = 1, #user do
 		update_one(user[i])
 	end
-	log.print("update finish")
+	core.log("update finish")
 end
 
 local function page_update()
 	local ok, err = core.pcall(safe_update)
 	if not ok then
-		log.print(err)
+		core.log(err)
 	end
 	core.timeout(limit_update, page_update)
 end
