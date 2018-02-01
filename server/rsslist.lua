@@ -391,11 +391,13 @@ local function update_one(uid)
 	local chapter_new = {}
 	local chapter_rss = {}
 	local chapter_new_count = 0
-	local ok, rss_ = db:hgetall(format(dbk_rss_siteid, uid))
+	local dbk = format(dbk_rss_siteid, uid)
+	local ok, rss_ = db:hgetall(dbk)
 	assert(ok, rss_)
 	for i = 1, #rss_, 2 do
 		local url = rss_[i]
 		local rssid = rss_[i + 1]
+		core.log("update uid:", dbk, " url", url, rssid)
 		local status, head, body = tool.httpget(url)
 		if status ~= 200 then
 			core.log("page_update", status, head, body)
@@ -474,21 +476,24 @@ local function update_one(uid)
 	end
 end
 
-local function safe_update()
+local function page_update()
 	core.log("update start")
-	local user = userinfo.getall()
+	local ok, user = core.pcall(userinfo.getall)
+	if not ok then
+		core.log(user)
+	end
+	local safe = core.pcall
 	for i = 1, #user do
-		update_one(user[i])
+		local uid = user[i]
+		core.log("update user:", uid)
+		local ok, err = safe(update_one, uid)
+		if not ok then
+			core.log(err)
+		end
 	end
 	core.log("update finish")
-end
-
-local function page_update()
-	local ok, err = core.pcall(safe_update)
-	if not ok then
-		core.log(err)
-	end
 	core.timeout(limit_update, page_update)
 end
-core.timeout(limit_update, page_update)
+
+core.start(page_update)
 
