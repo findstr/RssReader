@@ -269,8 +269,10 @@ dispatch["/page/get"] = function(req, body, write)
 		local read = tbl[2] and true or false
 		if title then
 			title = tool.escapejson(title)
+			core.log("/page/get uid:", uid, " idx:", i, "title:", title)
 			out[i] = format([[{"title":"%s","cid":"%s","read":%s}]],
 					title, v, read)
+
 			i = i + 1
 		else
 			core.log("/page/get skip", dbk, v)
@@ -469,8 +471,9 @@ local function update_one(uid)
 		cmd_del[#cmd_del + 1] = cmd_zrem
 	end
 	if #cmd_del > 0 then
+		local out = {}
 		local ok, n = db:pipeline(cmd_del, out)
-		for i = 1, #out, 2 do
+		for i = 1, n, 2 do
 			assert(out[i], out[i + 1])
 		end
 	end
