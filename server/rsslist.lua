@@ -15,6 +15,8 @@ local limit_update = assert(core.envget("limit_update"), "limit_update")
 limit_rss = tonumber(limit_rss)
 limit_chapter = tonumber(limit_chapter)
 
+local dbk_read_time = "rss:readtime"
+local dbk_rss_update = "rss:%s:update"
 local dbk_rss_index = "rss:%s:index"
 local dbk_rss_siteid = "rss:%s:siteid"
 local dbk_rss_idsite = "rss:%s:idsite"
@@ -131,211 +133,10 @@ local function rss_add(uid, dbk_siteid, rss,  content)
 				"title", title,
 				"link", link)
 	assert(ok, err)
-	core.log("/rsslist/add", rss, rssid)
+	core.log("/rsslist/add", uid, rss, rssid)
 	chapter_save(uid, rssid, rssid + count, chapter)
 	return title, rssid, link
 end
-
-dispatch["/rsslist/add"] = function(req, body, write)
-	local HEAD = {}
-	local param = {}
-	tool.jsondecode(body, param)
-	local uid = param.uid
-	local rss = param.rss
-	local dbk_siteid = format(dbk_rss_siteid, uid)
-	--check exist
-	core.log("/rsslist/add uid:", param.uid, dbk_siteid, rss)
-	local ok, rssid = db:hget(dbk_siteid, rss)
-	if ok then
-		local ack = [[{"errmsg":"要订阅的内容已存在"}]]
-		return write(400, HEAD, ack)
-	end
-	--check if max
-	local ok, num = db:hlen(dbk_siteid)
-	if not ok or tonumber(num) > limit_rss then
-		local ack = [[{"errmsg":"RSS源数量已达上限"}]]
-		return write(400, HEAD, ack)
-	end
-	--fetch rss xml
-	print("rss", rss)
-	local status, head, body = tool.httpget(rss)
-	if status ~= 200 then
-		local ack = format([[{"errmsg":"获取RSS内容失败 错误码:%s"]], status)
-		return write(400, HEAD, ack)
-	end
-	--parse rss xml
-	local ok, title, rssid, link = pcall(rss_add, uid, dbk_siteid, rss, body)
-	if not ok then
-		local ack = format([[{"errmsg":"保存RSS文章失败 错误码:%s"}]], title)
-		return write(400, HEAD, ack)
-	end
-	--ack
-	local ack = format('{"title":"%s", "rssid":"%s", "link":"%s"}', title, rssid, link)
-	core.log(ack)
-	write(200, HEAD, ack)
-end
-
-
-dispatch["/rsslist/get"] = function(req, body, write)
-	local HEAD = {}
-	local param = {}
-	tool.jsondecode(body, param)
-	local uid = param.uid
-	local arr = {}
-	local idx = 1
-	local dbk = format(dbk_rss_idsite, uid)
-	core.log("/rsslist/get uid:", uid, dbk)
-	local ok, res = db:hgetall(dbk)
-	assert(ok)
-	for i = 1, #res, 2 do
-		local rssid = res[i]
-		local dbk = format(dbk_rss_site, uid, rssid)
-		core.log("dbk", dbk)
-		local ok, rss = db:hmget(dbk, "title", "link")
-		assert(ok, rsstitle)
-		arr[idx] = format('{"title":"%s","link":"%s","rssid":"%s"}',
-				rss[1], rss[2], rssid)
-		idx = idx + 1
-	end
-	local ack = format('[%s]', table.concat(arr, ","))
-	core.log(ack)
-	write(200, HEAD, ack)
-end
-
-dispatch["/rsslist/del"] = function(req, body, write)
-	local param = {}
-	tool.jsondecode(body, param)
-	local uid = param.uid
-	local rssid = param.rssid
-	core.log("/rsslist/del uid:", uid, "rssid:", rssid)
-	local dbk_siteid = format(dbk_rss_siteid, uid)
-	local dbk_idsite = format(dbk_rss_idsite, uid)
-	local ok, rssurl = db:hget(dbk_idsite, rssid)
-	assert(ok, rssurl)
-	--getall chapter
-	local ok, chaplist = db:zrangebyscore(
-		format(dbk_rss_chlist, uid), rssid, rssid)
-	assert(ok, chaplist)
-	if type(chaplist) ~= "table" then
-		chaplist = {chaplist}
-	end
-	--clear rss_url
-	local cmd = {}
-	local out = {}
-	local del_chapter = {"del"}
-	local del_chlist = {"zremrangebyscore",
-		format(dbk_rss_chlist, uid), rssid, rssid}
-	cmd[1] = {"hdel", dbk_siteid, rssurl}
-	cmd[2] = {"hdel", dbk_idsite, rssid}
-	cmd[3] = {"del", format(dbk_rss_site, uid, rssid)}
-	cmd[4] = del_chapter
-	cmd[5] = del_chlist
-	local i = 2
-	for _, v in pairs(chaplist) do
-		del_chapter[i] = format(dbk_rss_chapter, uid, v)
-		i = i + 1
-	end
-	db:pipeline(cmd, out)
-	for i = 1, #out, 2 do
-		assert(out[i], out[i + 1])
-	end
-	write(200, {}, "")
-end
-
-dispatch["/page/get"] = function(req, body, write)
-	local param = {}
-	tool.jsondecode(body, param)
-	local uid = param.uid
-	local idx = param.index
-	local out = {}
-	core.log("/page/get uid:", uid, "index:", idx)
-	local dbk_chlist = format(dbk_rss_chlist, uid)
-	local ok, res = db:zrange(dbk_chlist, 0, -1)
-	assert(ok, res)
-	if type(res) ~= "table" then
-		res = {res}
-	end
-	table.sort(res, function(a, b)
-		local x = tonumber(a)
-		local y = tonumber(b)
-		return x > y
-	end)
-	local i = 1
-	for _, v in pairs(res) do
-		local dbk = format(dbk_rss_chapter, uid, v)
-		local ok, tbl = db:hmget(dbk, "title", "read")
-		assert(tbl)
-		local title = tbl[1]
-		local read = tbl[2] and true or false
-		if title then
-			title = tool.escapejson(title)
-			core.log("/page/get uid:", uid, " idx:", i, "title:", title)
-			out[i] = format([[{"title":"%s","cid":"%s","read":%s}]],
-					title, v, read)
-
-			i = i + 1
-		else
-			core.log("/page/get skip", dbk, v)
-		end
-	end
-	local head = {}
-	local body = format("[%s]", table.concat(out, ","))
-	if #body > 512 then
-		head[1] = "Content-Encoding: gzip"
-		body = gzip.deflate(body)
-	end
-	write(200, head, body)
-end
-
-dispatch["/page/read"] = function(req, body, write)
-	local param = {}
-	tool.jsondecode(body, param)
-	local uid = param.uid
-	local cid = param.cid
-	core.log('/page/read uid:', uid, 'cid:', cid)
-	local dbk = format(dbk_rss_chapter, uid, cid)
-	db:hset(dbk, "read", "true")
-	write(200, {}, "")
-end
-
-dispatch["/page/detail"] = function(req, body, write)
-	local param = {}
-	tool.jsondecode(body, param)
-	local uid = param.uid
-	local cid = param.cid
-	local needcontent = param.content == "true"
-	print("body", body)
-	core.log("/page/detail uid:", uid, "cid:", cid, "needcontent:", needcontent)
-	local dbk = format(dbk_rss_chapter, uid, cid)
-	local content_key
-	if not needcontent then
-		content_key = "description"
-	else
-		content_key = "content"
-	end
-	local ok, res = db:hmget(dbk, content_key, "author", "pubDate", "link")
-	for k, v in pairs(res) do
-		if not v then
-			res[k] = "nil"
-		end
-	end
-	if not needcontent then
-		res[1] = build_content(res[1])
-	end
-	print("res[1]", content_key)
-	local body = format('{"content":"%s","author":"%s","date":"%s","link":"%s"}',
-		tool.escapejson(res[1]),
-		tool.escapejson(res[2]),
-		tool.escapejson(res[3]),
-		tool.escapejson(res[4]))
-	local head = {}
-	if #body > 512 then
-		head[1] = "Content-Encoding: gzip"
-		body = gzip.deflate(body)
-	end
-	write(200, head, body)
-end
-
 
 local dbk_rss_siteid = "rss:%s:siteid"
 local dbk_rss_chlist = "rss:%s:chlist"	--zset
@@ -344,6 +145,18 @@ local dbk_rss_chapter = "rss:%s:chapter:%s"
 
 
 local function update_one(uid)
+	local now = core.now()
+	db:hset(dbk_read_time, uid, now)
+	local update_time = format(dbk_rss_update, uid)
+	local ok, val = db:get(update_time)
+	if ok then
+		val = tonumber(val)
+		if now - val < 3600 * 24 then
+			return
+		end
+	end
+	core.log("update_one check", ok, val)
+	db:set(update_time, now)
 	local cmd_i = 1
 	local cmd_ch_chid = {}
 	local cmd_ch_guid = {}
@@ -479,24 +292,207 @@ local function update_one(uid)
 	end
 end
 
-local function page_update()
-	core.log("update start")
-	local ok, user = core.pcall(userinfo.getall)
+
+
+dispatch["/rsslist/add"] = function(req, body, write)
+	local HEAD = {}
+	local param = {}
+	tool.jsondecode(body, param)
+	local uid = param.uid
+	local rss = param.rss
+	local dbk_siteid = format(dbk_rss_siteid, uid)
+	--check exist
+	core.log("/rsslist/add uid:", param.uid, dbk_siteid, rss)
+	local ok, rssid = db:hget(dbk_siteid, rss)
+	if ok then
+		local ack = [[{"errmsg":"要订阅的内容已存在"}]]
+		return write(400, HEAD, ack)
+	end
+	--check if max
+	local ok, num = db:hlen(dbk_siteid)
+	if not ok or tonumber(num) > limit_rss then
+		local ack = [[{"errmsg":"RSS源数量已达上限"}]]
+		return write(400, HEAD, ack)
+	end
+	--fetch rss xml
+	print("rss", rss)
+	local status, head, body = tool.httpget(rss)
+	if status ~= 200 then
+		local ack = format([[{"errmsg":"获取RSS内容失败 错误码:%s"]], status)
+		return write(400, HEAD, ack)
+	end
+	--parse rss xml
+	local ok, title, rssid, link = pcall(rss_add, uid, dbk_siteid, rss, body)
 	if not ok then
-		core.log(user)
+		local ack = format([[{"errmsg":"保存RSS文章失败 错误码:%s"}]], title)
+		return write(400, HEAD, ack)
 	end
-	local safe = core.pcall
-	for i = 1, #user do
-		local uid = user[i]
-		core.log("update user:", uid)
-		local ok, err = safe(update_one, uid)
-		if not ok then
-			core.log(err)
-		end
-	end
-	core.log("update finish")
-	core.timeout(limit_update, page_update)
+	--ack
+	local ack = format('{"title":"%s", "rssid":"%s", "link":"%s"}', title, rssid, link)
+	core.log(ack)
+	write(200, HEAD, ack)
 end
 
-core.start(page_update)
+
+dispatch["/rsslist/get"] = function(req, body, write)
+	local HEAD = {}
+	local param = {}
+	tool.jsondecode(body, param)
+	local uid = param.uid
+	local arr = {}
+	local idx = 1
+	local dbk = format(dbk_rss_idsite, uid)
+	core.log("/rsslist/get uid:", uid, dbk)
+	local ok, res = db:hgetall(dbk)
+	assert(ok)
+	for i = 1, #res, 2 do
+		local rssid = res[i]
+		local dbk = format(dbk_rss_site, uid, rssid)
+		core.log("dbk", dbk)
+		local ok, rss = db:hmget(dbk, "title", "link")
+		assert(ok, rsstitle)
+		arr[idx] = format('{"title":"%s","link":"%s","rssid":"%s"}',
+				rss[1], rss[2], rssid)
+		idx = idx + 1
+	end
+	local ack = format('[%s]', table.concat(arr, ","))
+	core.log(ack)
+	write(200, HEAD, ack)
+end
+
+dispatch["/rsslist/del"] = function(req, body, write)
+	local param = {}
+	tool.jsondecode(body, param)
+	local uid = param.uid
+	local rssid = param.rssid
+	core.log("/rsslist/del uid:", uid, "rssid:", rssid)
+	local dbk_siteid = format(dbk_rss_siteid, uid)
+	local dbk_idsite = format(dbk_rss_idsite, uid)
+	local ok, rssurl = db:hget(dbk_idsite, rssid)
+	assert(ok, rssurl)
+	--getall chapter
+	local ok, chaplist = db:zrangebyscore(
+		format(dbk_rss_chlist, uid), rssid, rssid)
+	assert(ok, chaplist)
+	if type(chaplist) ~= "table" then
+		chaplist = {chaplist}
+	end
+	--clear rss_url
+	local cmd = {}
+	local out = {}
+	local del_chapter = {"del"}
+	local del_chlist = {"zremrangebyscore",
+		format(dbk_rss_chlist, uid), rssid, rssid}
+	cmd[1] = {"hdel", dbk_siteid, rssurl}
+	cmd[2] = {"hdel", dbk_idsite, rssid}
+	cmd[3] = {"del", format(dbk_rss_site, uid, rssid)}
+	cmd[4] = del_chapter
+	cmd[5] = del_chlist
+	local i = 2
+	for _, v in pairs(chaplist) do
+		del_chapter[i] = format(dbk_rss_chapter, uid, v)
+		i = i + 1
+	end
+	db:pipeline(cmd, out)
+	for i = 1, #out, 2 do
+		assert(out[i], out[i + 1])
+	end
+	write(200, {}, "")
+end
+
+dispatch["/page/get"] = function(req, body, write)
+	local param = {}
+	tool.jsondecode(body, param)
+	local uid = param.uid
+	core.fork(function()update_one(uid)end)
+	local idx = param.index
+	local out = {}
+	core.log("/page/get uid:", uid, "index:", idx)
+	local dbk_chlist = format(dbk_rss_chlist, uid)
+	local ok, res = db:zrange(dbk_chlist, 0, -1)
+	assert(ok, res)
+	if type(res) ~= "table" then
+		res = {res}
+	end
+	table.sort(res, function(a, b)
+		local x = tonumber(a)
+		local y = tonumber(b)
+		return x > y
+	end)
+	local i = 1
+	for _, v in pairs(res) do
+		local dbk = format(dbk_rss_chapter, uid, v)
+		local ok, tbl = db:hmget(dbk, "title", "read")
+		assert(tbl)
+		local title = tbl[1]
+		local read = tbl[2] and true or false
+		if title then
+			title = tool.escapejson(title)
+			core.log("/page/get uid:", uid, " idx:", i, "title:", title)
+			out[i] = format([[{"title":"%s","cid":"%s","read":%s}]],
+					title, v, read)
+
+			i = i + 1
+		else
+			core.log("/page/get skip", dbk, v)
+		end
+	end
+	local head = {}
+	local body = format("[%s]", table.concat(out, ","))
+	if #body > 512 then
+		head[1] = "Content-Encoding: gzip"
+		body = gzip.deflate(body)
+	end
+	write(200, head, body)
+end
+
+dispatch["/page/read"] = function(req, body, write)
+	local param = {}
+	tool.jsondecode(body, param)
+	local uid = param.uid
+	local cid = param.cid
+	core.log('/page/read uid:', uid, 'cid:', cid)
+	local dbk = format(dbk_rss_chapter, uid, cid)
+	db:hset(dbk, "read", "true")
+	write(200, {}, "")
+end
+
+dispatch["/page/detail"] = function(req, body, write)
+	local param = {}
+	tool.jsondecode(body, param)
+	local uid = param.uid
+	local cid = param.cid
+	local needcontent = param.content == "true"
+	print("body", body)
+	core.log("/page/detail uid:", uid, "cid:", cid, "needcontent:", needcontent)
+	local dbk = format(dbk_rss_chapter, uid, cid)
+	local content_key
+	if not needcontent then
+		content_key = "description"
+	else
+		content_key = "content"
+	end
+	local ok, res = db:hmget(dbk, content_key, "author", "pubDate", "link")
+	for k, v in pairs(res) do
+		if not v then
+			res[k] = "nil"
+		end
+	end
+	if not needcontent then
+		res[1] = build_content(res[1])
+	end
+	print("res[1]", content_key)
+	local body = format('{"content":"%s","author":"%s","date":"%s","link":"%s"}',
+		tool.escapejson(res[1]),
+		tool.escapejson(res[2]),
+		tool.escapejson(res[3]),
+		tool.escapejson(res[4]))
+	local head = {}
+	if #body > 512 then
+		head[1] = "Content-Encoding: gzip"
+		body = gzip.deflate(body)
+	end
+	write(200, head, body)
+end
+
 
