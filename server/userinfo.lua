@@ -37,7 +37,7 @@ dispatch["/userinfo/getid"] = function(req, body, write)
 	local wid = weid(code)
 	local ok, uid = db:hget(dbk_account_weid, wid)
 	core.log("/userinfo/getid", code, uid, wid)
-	if not ok then
+	if not ok or not uid then
 		uid = genid()
 		db:hset(dbk_account_weid, wid, uid)
 		db:hset(dbk_account_uid, uid, wid)
