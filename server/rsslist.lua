@@ -8,6 +8,7 @@ local gzip = require "gzip"
 local db = require "db" .instance()
 local userinfo = require "userinfo"
 local pcall = pcall
+local write = require "http.server" . write
 
 local limit_rss = assert(core.envget("limit_rss"), "limit_rss")
 local limit_chapter = assert(core.envget("limit_chapter"), "limit_chapter")
@@ -150,7 +151,11 @@ local function update_one(uid)
 	local update_time = format(dbk_rss_update, uid)
 	local ok, val = db:get(update_time)
 	if ok then
-		val = tonumber(val)
+		if not val then
+			val = 0
+		else
+			val = tonumber(val)
+		end
 		if now - val < 3600 * 24 then
 			return
 		end
@@ -294,7 +299,7 @@ end
 
 
 
-dispatch["/rsslist/add"] = function(req, body, write)
+dispatch["/rsslist/add"] = function(fd, req, body)
 	local HEAD = {}
 	local param = {}
 	tool.jsondecode(body, param)
@@ -304,37 +309,37 @@ dispatch["/rsslist/add"] = function(req, body, write)
 	--check exist
 	core.log("/rsslist/add uid:", param.uid, dbk_siteid, rss)
 	local ok, rssid = db:hget(dbk_siteid, rss)
-	if ok then
+	if rssid then
 		local ack = [[{"errmsg":"要订阅的内容已存在"}]]
-		return write(400, HEAD, ack)
+		return write(fd, 400, HEAD, ack)
 	end
 	--check if max
 	local ok, num = db:hlen(dbk_siteid)
 	if not ok or tonumber(num) > limit_rss then
 		local ack = [[{"errmsg":"RSS源数量已达上限"}]]
-		return write(400, HEAD, ack)
+		return write(fd, 400, HEAD, ack)
 	end
 	--fetch rss xml
 	print("rss", rss)
 	local status, head, body = tool.httpget(rss)
 	if status ~= 200 then
 		local ack = format([[{"errmsg":"获取RSS内容失败 错误码:%s"]], status)
-		return write(400, HEAD, ack)
+		return write(fd, 400, HEAD, ack)
 	end
 	--parse rss xml
 	local ok, title, rssid, link = pcall(rss_add, uid, dbk_siteid, rss, body)
 	if not ok then
 		local ack = format([[{"errmsg":"保存RSS文章失败 错误码:%s"}]], title)
-		return write(400, HEAD, ack)
+		return write(fd, 400, HEAD, ack)
 	end
 	--ack
 	local ack = format('{"title":"%s", "rssid":"%s", "link":"%s"}', title, rssid, link)
 	core.log(ack)
-	write(200, HEAD, ack)
+	write(fd, 200, HEAD, ack)
 end
 
 
-dispatch["/rsslist/get"] = function(req, body, write)
+dispatch["/rsslist/get"] = function(fd, req, body)
 	local HEAD = {}
 	local param = {}
 	tool.jsondecode(body, param)
@@ -357,10 +362,10 @@ dispatch["/rsslist/get"] = function(req, body, write)
 	end
 	local ack = format('[%s]', table.concat(arr, ","))
 	core.log(ack)
-	write(200, HEAD, ack)
+	write(fd, 200, HEAD, ack)
 end
 
-dispatch["/rsslist/del"] = function(req, body, write)
+dispatch["/rsslist/del"] = function(fd, req, body)
 	local param = {}
 	tool.jsondecode(body, param)
 	local uid = param.uid
@@ -397,10 +402,10 @@ dispatch["/rsslist/del"] = function(req, body, write)
 	for i = 1, #out, 2 do
 		assert(out[i], out[i + 1])
 	end
-	write(200, {}, "")
+	write(fd, 200, {}, "")
 end
 
-dispatch["/page/get"] = function(req, body, write)
+dispatch["/page/get"] = function(fd, req, body)
 	local param = {}
 	tool.jsondecode(body, param)
 	local uid = param.uid
@@ -443,10 +448,10 @@ dispatch["/page/get"] = function(req, body, write)
 		head[1] = "Content-Encoding: gzip"
 		body = gzip.deflate(body)
 	end
-	write(200, head, body)
+	write(fd, 200, head, body)
 end
 
-dispatch["/page/read"] = function(req, body, write)
+dispatch["/page/read"] = function(fd, req, body)
 	local param = {}
 	tool.jsondecode(body, param)
 	local uid = param.uid
@@ -454,10 +459,10 @@ dispatch["/page/read"] = function(req, body, write)
 	core.log('/page/read uid:', uid, 'cid:', cid)
 	local dbk = format(dbk_rss_chapter, uid, cid)
 	db:hset(dbk, "read", "true")
-	write(200, {}, "")
+	write(fd, 200, {}, "")
 end
 
-dispatch["/page/detail"] = function(req, body, write)
+dispatch["/page/detail"] = function(fd, req, body)
 	local param = {}
 	tool.jsondecode(body, param)
 	local uid = param.uid
@@ -492,7 +497,7 @@ dispatch["/page/detail"] = function(req, body, write)
 		head[1] = "Content-Encoding: gzip"
 		body = gzip.deflate(body)
 	end
-	write(200, head, body)
+	write(fd, 200, head, body)
 end
 
 

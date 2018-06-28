@@ -3,7 +3,7 @@ local dispatch = require "router"
 local format = string.format
 local tool = require "tool"
 local db = require "db" .instance()
-
+local write = require "http.server" . write
 local dbk_account_id = "account:id"
 local dbk_account_weid = "account:weid"
 local dbk_account_uid = "account:uid"
@@ -31,7 +31,7 @@ local function weid(code)
 end
 
 local ack_getuid = '{"uid": %s}'
-dispatch["/userinfo/getid"] = function(req, body, write)
+dispatch["/userinfo/getid"] = function(fd, req, body)
 	local head = {}
 	local code = req.form['code']
 	local wid = weid(code)
@@ -42,7 +42,7 @@ dispatch["/userinfo/getid"] = function(req, body, write)
 		db:hset(dbk_account_weid, wid, uid)
 		db:hset(dbk_account_uid, uid, wid)
 	end
-	write(200, head, format(ack_getuid, uid))
+	write(fd, 200, head, format(ack_getuid, uid))
 end
 
 ---------------module

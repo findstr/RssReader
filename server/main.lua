@@ -5,8 +5,8 @@ local client = require "http.client"
 local gzip = require "gzip"
 local db = require "db"
 local dispatch = require "router"
-
-dispatch["/"] = function(reqeust, body, write)
+local write = server.write
+dispatch["/"] = function(fd, reqeust, body)
 	local body = [[
 		<html>
 			<head>Hello Stupid</head>
@@ -22,7 +22,7 @@ dispatch["/"] = function(reqeust, body, write)
 		"Content-Encoding: gzip",
 		"Content-Type: text/html",
 	}
-	write(200, head, gzip.deflate(body))
+	write(fd, 200, head, gzip.deflate(body))
 end
 
 local tool = require "tool"
@@ -32,15 +32,16 @@ core.start(function()
 	db.start()
 	require "userinfo"
 	require "rsslist"
-	server.listen(assert(core.envget("listen")), function(request, body, write)
+	server.listen(assert(core.envget("listen")), function(fd, request, body)
 		core.log(request.uri)
 		core.log(request.version)
 		local c = dispatch[request.uri]
 		if c then
-			c(request, body, write)
+			c(fd, request, body)
+			return
 		else
 			print("Unsupport uri", request.uri)
-			write(404,
+			write(fd, 404,
 				{"Content-Type: text/plain"},
 				"404 Page Not Found")
 		end
