@@ -9,7 +9,6 @@ local function encode(str)
 	local tbl = {
 		['"'] = '\\"',
 		["\\"] = "\\\\",
-		["/"] = "\\/",
 		["\n"] = "\\n",
 		["\r"] = "\\r",
 		["\t"] = "\\t",
@@ -37,7 +36,7 @@ function M.jsonencode(input)
 	return table.concat(buff)
 end
 
-M.escapejson = encode
+M.escape = encode
 
 M.escapehtml = function(input)
 	local tbl = {
