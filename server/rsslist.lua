@@ -296,6 +296,7 @@ dispatch["/page/read"] = function(fd, req, body)
 	local uid = param.uid
 	local cid = param.cid
 	local readdbk = format(dbk_read, uid)
+	db:hset(readdbk, cid, "true")
 	core.log('/page/read uid:', uid, 'cid:', cid)
 	write(fd, 200, {}, "")
 end
