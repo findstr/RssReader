@@ -34,7 +34,6 @@ local function rssload(content, chapter, guid)
 		end
 		if not p.content then
 			local status, head, body = tool.httpget(p.link)
-			print("+", status, head, body)
 			if body then
 				p.content = tool.escapehtml(body)
 				core.sleep(100)
@@ -43,10 +42,9 @@ local function rssload(content, chapter, guid)
 		if not p.content then
 			p.content = build_content(p.description)
 		end
-		print(":", p.guid, p.content)
 		count = count + 1
 		chapter[count] = p
-		if count > limit_chapter then
+		if count >= limit_chapter then
 			assert(false, "finish")
 		end
 	end
@@ -63,11 +61,10 @@ local function rssload(content, chapter, guid)
 	core.log("RSS.parse", ok, err, count)
 	return title, link
 end
-
 local dbk_subscribe = "rss:%s:subscribe"
 local dbk_chapters = "rss:%s:chapters"
 local dbk_chlist = "rss:%s:chlist"
-local dbk_markread = "rss:%s:markread"
+local dbk_read = "rss:%s:read"
 local dbk_update = "rss:update"
 
 local function savechapters(uid, chapters)
@@ -77,27 +74,32 @@ local function savechapters(uid, chapters)
 	local left = limit_chapter - count
 	local dbreq = {}
 	--evict
-	local ok, res = db:zrange(dbklist, 0, left)
+	local ok, res = db:lrange(dbklist, left, -1)
 	if res and #res > 0 then
+		local mi = 3
+		local mark = {"hdel", format(dbk_read, uid)}
+		for _, v in pairs(res) do
+			mark[mi] = v
+			mi = mi + 1
+		end
 		table.move(res, 1, #res, 3)
 		res[1] = "hdel"
 		res[2] = dbkchap
 		dbreq[1] = res
+		dbreq[2] = mark
+		dbreq[3] = {"ltrim", dbklist, 0, left}
 	end
-	dbreq[#dbreq + 1] = {"zrem", dbklist, 0, left}
 	--save
 	local now = core.now()
 	local i, j = 2, 2
-	local dbchlist = {"zadd",  dbklist}
+	local dbchlist = {"lpush",  dbklist}
 	local dbchapter = {"hmset", dbkchap}
 	for x = count, 1, -1 do
 		local v = chapters[x]
 		i = i + 1
-		dbchlist[i] = now
-		i = i + 1
-		dbchlist[i] = v.guid
+		dbchlist[i] = v.link
 		j = j + 1
-		dbchapter[j] = v.guid
+		dbchapter[j] = v.link
 		j = j + 1
 		dbchapter[j] = json.encode(v)
 	end
@@ -105,7 +107,7 @@ local function savechapters(uid, chapters)
 	dbreq[#dbreq + 1] = dbchapter
 	local ok = db:pipeline(dbreq, dbreq)
 	for i = 1, 4 do
-		print(dbreq[i])
+		core.log(dbreq[i])
 	end
 end
 
@@ -148,7 +150,7 @@ dispatch["/rsslist/add"] = function(fd, req, body)
 	local uid = param.uid
 	local rss = param.rss
 	local dbk = format(dbk_subscribe, uid)
-	print(uid, rss, dbk)
+	core.log(uid, rss, dbk)
 	local ok, attr = db:hget(dbk, rss)
 	if attr then
 		local ack = [[{"errmsg":"要订阅的内容已存在"}]]
@@ -210,8 +212,42 @@ dispatch["/rsslist/del"] = function(fd, req, body)
 	local param = json.decode(body)
 	local uid = param.uid
 	local rssid = param.rssid
-	local dbk = format(dbk_subscribe, uid)
-	local ok, attr = db:hdel(dbk, rssid)
+	local dbksub = format(dbk_subscribe, uid)
+	local dbklist = format(dbk_chlist, uid)
+	local ok, res = db:hget(dbksub, rssid)
+	db:hdel(dbksub, rssid)
+	local attr = json.decode(res)
+	local ok, list = db:lrange(dbklist, 0, -1)
+	if list and #list > 0 then
+		local m, n  = 2, 2
+		local remread = {"hdel", format(dbk_read, uid)}
+		local remchap = {"hdel", format(dbk_chapters, uid)}
+		local remlist = {"del", dbklist}
+		local pushlist = {"rpush", dbklist}
+		local siteurl = attr.link
+		local find = string.find
+		for i = 1, #list do
+			local link = list[i]
+			if find(link, siteurl) then
+				n = n + 1
+				remread[n] = link
+				remchap[n] = link
+			else
+				m = m + 1
+				pushlist[m] = link
+			end
+		end
+		local dbreq = {
+			remread, remchap, remlist
+		}
+		if #pushlist > 2 then
+			dbreq[4] = pushlist
+		end
+		db:pipeline(dbreq, dbreq)
+		for i = 1, 8 do
+			core.log("/rsslist/del", dbreq[i])
+		end
+	end
 	write(fd, 200, {}, "")
 end
 
@@ -222,29 +258,27 @@ dispatch["/page/get"] = function(fd, req, body)
 	local idx = param.index
 	refresh(uid)
 	core.log("/page/get uid:", uid, "index:", idx, ":")
-	local dbk = format(dbk_chapters, uid)
-	local readdbk = format(dbk_markread, uid)
-	local ok, res = db:zrevrange(format(dbk_chlist, uid), idx, -1)
-	print(":", dbk, ok, res)
+	local chapdbk = format(dbk_chapters, uid)
+	local readdbk = format(dbk_read, uid)
+	local ok, res = db:lrange(format(dbk_chlist, uid), idx, -1)
 	if res and #res > 0 then
 		local i = 1
 		local mark = {"hmget", readdbk}
 		for i = 1, #res do
-			mark[#mark + 1] = res[i]
+			mark[i + 2] = res[i]
 		end
 		table.move(res, 1, #res, 3)
 		res[1] = "hmget"
-		res[2] = dbk
+		res[2] = chapdbk
 		local dbreq = {res, mark}
 		db:pipeline(dbreq, dbreq)
-		print(":", dbreq[1], dbreq[2], dbreq[3], dbreq[4])
 		local chapres = dbreq[2]
 		local markres = dbreq[4]
 		for k, v in pairs(chapres) do
 			v = json.decode(v)
 			core.log("/page/get uid:", uid, " idx:", i, v.title)
 			out[i] = format([[{"title":"%s","cid":"%s","read":%s}]],
-				v.title, v.guid, markres[k] and "true" or "false")
+				v.title, v.link, markres[k] and "true" or "false")
 			i = i + 1
 		end
 	end
@@ -261,8 +295,7 @@ dispatch["/page/read"] = function(fd, req, body)
 	local param = json.decode(body)
 	local uid = param.uid
 	local cid = param.cid
-	local readdbk = format(dbk_markread, uid)
-	print(readdbk, db:hset(readdbk, cid, true))
+	local readdbk = format(dbk_read, uid)
 	core.log('/page/read uid:', uid, 'cid:', cid)
 	write(fd, 200, {}, "")
 end
@@ -274,7 +307,7 @@ dispatch["/page/detail"] = function(fd, req, body)
 	local dbk = format(dbk_chapters, uid)
 	local ok, res = db:hget(dbk, cid)
 	obj = json.decode(res)
-	core.log("/page/detail uid:", uid, "cid:", cid, obj.content)
+	core.log("/page/detail uid:", uid, "cid:", cid)
 	local body = format('{"content":"%s","author":"%s","date":"%s","link":"%s"}',
 		tool.escape(obj.content),obj.author,obj.pubDate, obj.link)
 	local head = {}
