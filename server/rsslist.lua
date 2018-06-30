@@ -32,10 +32,9 @@ local function rssload(content, chapter, guid)
 		if p.guid == guid then
 			assert(false, p.guid)
 		end
-		count = count + 1
-		chapter[count] = p
 		if not p.content then
 			local status, head, body = tool.httpget(p.link)
+			print("+", status, head, body)
 			if body then
 				p.content = tool.escapehtml(body)
 				core.sleep(100)
@@ -44,6 +43,9 @@ local function rssload(content, chapter, guid)
 		if not p.content then
 			p.content = build_content(p.description)
 		end
+		print(":", p.guid, p.content)
+		count = count + 1
+		chapter[count] = p
 		if count > limit_chapter then
 			assert(false, "finish")
 		end
@@ -75,20 +77,23 @@ local function savechapters(uid, chapters)
 	local left = limit_chapter - count
 	local dbreq = {}
 	--evict
-	local ok, res = db:lrange(dbklist, left, -1)
+	local ok, res = db:zrange(dbklist, 0, left)
 	if res and #res > 0 then
 		table.move(res, 1, #res, 3)
 		res[1] = "hdel"
 		res[2] = dbkchap
 		dbreq[1] = res
 	end
-	dbreq[#dbreq + 1] = {"ltrim", dbklist, 0, left}
+	dbreq[#dbreq + 1] = {"zrem", dbklist, 0, left}
 	--save
+	local now = core.now()
 	local i, j = 2, 2
-	local dbchlist = {"lpush",  dbklist}
+	local dbchlist = {"zadd",  dbklist}
 	local dbchapter = {"hmset", dbkchap}
 	for x = count, 1, -1 do
 		local v = chapters[x]
+		i = i + 1
+		dbchlist[i] = now
 		i = i + 1
 		dbchlist[i] = v.guid
 		j = j + 1
@@ -219,7 +224,7 @@ dispatch["/page/get"] = function(fd, req, body)
 	core.log("/page/get uid:", uid, "index:", idx, ":")
 	local dbk = format(dbk_chapters, uid)
 	local readdbk = format(dbk_markread, uid)
-	local ok, res = db:lrange(format(dbk_chlist, uid), idx, -1)
+	local ok, res = db:zrevrange(format(dbk_chlist, uid), idx, -1)
 	print(":", dbk, ok, res)
 	if res and #res > 0 then
 		local i = 1
@@ -269,7 +274,7 @@ dispatch["/page/detail"] = function(fd, req, body)
 	local dbk = format(dbk_chapters, uid)
 	local ok, res = db:hget(dbk, cid)
 	obj = json.decode(res)
-	core.log("/page/detail uid:", uid, "cid:", cid)
+	core.log("/page/detail uid:", uid, "cid:", cid, obj.content)
 	local body = format('{"content":"%s","author":"%s","date":"%s","link":"%s"}',
 		tool.escape(obj.content),obj.author,obj.pubDate, obj.link)
 	local head = {}
