@@ -29,6 +29,12 @@ local function rssload(content, chapter, guid)
 	local title = nil
 	local link = nil
 	local item = function(p)
+		if p.link then
+			p.link = p.link:match("([^%?]+)")
+		end
+		if p.guid then
+			p.guid = p.guid:match("([^%?]+)")
+		end
 		if p.guid == guid then
 			assert(false, p.guid)
 		end
@@ -44,7 +50,7 @@ local function rssload(content, chapter, guid)
 		end
 		count = count + 1
 		chapter[count] = p
-		if count >= limit_chapter then
+		if count >= 10 then
 			assert(false, "finish")
 		end
 	end
@@ -277,13 +283,16 @@ dispatch["/page/get"] = function(fd, req, body)
 		for k, v in pairs(chapres) do
 			v = json.decode(v)
 			core.log("/page/get uid:", uid, " idx:", i, v.title)
-			out[i] = format([[{"title":"%s","cid":"%s","read":%s}]],
-				v.title, v.link, markres[k] and "true" or "false")
+			out[i] = {
+				title = v.title,
+				cid = v.link,
+				read = markres and true or false,
+			}
 			i = i + 1
 		end
 	end
 	local head = {}
-	local body = format("[%s]", table.concat(out, ","))
+	local body = json.encode(out)
 	if #body > 512 then
 		head[1] = "Content-Encoding: gzip"
 		body = gzip.deflate(body)
