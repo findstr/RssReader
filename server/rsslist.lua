@@ -26,6 +26,7 @@ end
 
 local function rssload(content, chapter, guid)
 	local count = #chapter
+	local start = count
 	local title = nil
 	local link = nil
 	local item = function(p)
@@ -45,7 +46,7 @@ local function rssload(content, chapter, guid)
 				core.sleep(100)
 			end
 		end
-		if not p.content then
+		if not p.content or p.content == "" then
 			p.content = build_content(p.description)
 		end
 		count = count + 1
@@ -73,7 +74,7 @@ local dbk_chlist = "rss:%s:chlist"
 local dbk_read = "rss:%s:read"
 local dbk_update = "rss:update"
 
-local function savechapters(uid, chapters)
+local function savechapters(uid, chapters, siteurl)
 	local count = #chapters
 	local dbklist = format(dbk_chlist, uid)
 	local dbkchap = format(dbk_chapters, uid)
@@ -103,7 +104,7 @@ local function savechapters(uid, chapters)
 	for x = count, 1, -1 do
 		local v = chapters[x]
 		i = i + 1
-		dbchlist[i] = v.link
+		dbchlist[i] = format("%s=%s", v.link, siteurl)
 		j = j + 1
 		dbchapter[j] = v.link
 		j = j + 1
@@ -118,35 +119,36 @@ local function savechapters(uid, chapters)
 end
 
 local function refresh(uid)
-	local now = core.now()
+	local now = core.now() // 1000
 	local ok, val = db:hget(dbk_update, uid)
 	if not val then
 		val = 0
 	else
 		val = tonumber(val)
 	end
+	print("refresh", now, val, now - val)
 	if now - val < 3600 * 4 then
 		return
 	end
-	local chapters = {}
 	local dbksub = format(dbk_subscribe, uid)
-	db:hset(dbk_update, now)
+	db:hset(dbk_update, uid, now)
 	local ok, res = db:hgetall(dbksub)
 	for i = 1, #res, 2 do
 		local k = res[i]
 		local v = json.decode(res[i + 1])
 		local status, _, body = tool.httpget(k)
 		if status == 200 then
+			local chapters = {}
 			local n = #chapters
 			rssload(body, chapters, v.guid)
 			if #chapters > n then
 				v.guid = chapters[n + 1].guid
 				db:hset(dbksub, k, json.encode(v))
 			end
+			if #chapters > 0 then
+				savechapters(uid, chapters, v.link)
+			end
 		end
-	end
-	if #chapters > 0 then
-		savechapters(uid, chapters)
 	end
 end
 
@@ -181,7 +183,7 @@ dispatch["/rsslist/add"] = function(fd, req, body)
 		link = link,
 		guid = assert(chapters[1].guid)
 	}
-	savechapters(uid, chapters)
+	savechapters(uid, chapters, link)
 	db:hset(dbk, rss, json.encode(attr))
 	--ack
 	local ack = format('{"title":"%s", "rssid":"%s", "link":"%s"}', title, rss, link)
@@ -234,6 +236,7 @@ dispatch["/rsslist/del"] = function(fd, req, body)
 		local find = string.find
 		for i = 1, #list do
 			local link = list[i]
+			print("***", link, siteurl, find(link, siteurl))
 			if find(link, siteurl) then
 				n = n + 1
 				remread[n] = link
@@ -269,6 +272,9 @@ dispatch["/page/get"] = function(fd, req, body)
 	local ok, res = db:lrange(format(dbk_chlist, uid), idx, -1)
 	if res and #res > 0 then
 		local i = 1
+		for k,v in pairs(res) do
+			res[k] = v:match("([^=]+)")
+		end
 		local mark = {"hmget", readdbk}
 		for i = 1, #res do
 			mark[i + 2] = res[i]
@@ -286,7 +292,7 @@ dispatch["/page/get"] = function(fd, req, body)
 			out[i] = {
 				title = v.title,
 				cid = v.link,
-				read = markres and true or false,
+				read = markres[k] and true or false,
 			}
 			i = i + 1
 		end
