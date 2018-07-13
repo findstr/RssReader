@@ -6,7 +6,8 @@ include silly/Platform.mk
 
 linux macosx: all
 
-CCFLAG += -I./silly/lua/
+CCFLAG += -I./silly/deps/lua/
+CCFLAG += -I./zlib/
 
 all:\
 	$(LUACPATH)\
