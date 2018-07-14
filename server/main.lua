@@ -28,6 +28,7 @@ end
 local tool = require "tool"
 
 core.start(function()
+	print("RssReader startup")
 	dns.server("223.5.5.5:53")
 	db.start()
 	require "userinfo"
