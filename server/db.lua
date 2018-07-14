@@ -6,7 +6,7 @@ local db
 
 function M.start()
 	local err
-	local name = core.envget("dbip")
+	local name = core.envget("dbaddr")
 	local port = core.envget("dbport")
 	print("db start", name, port)
 	local addr = dns.resolve(name)
