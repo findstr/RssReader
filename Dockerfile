@@ -3,8 +3,7 @@ RUN set -x &&\
 	apt-get update &&\
 	apt-get install --no-install-recommends --no-install-suggests -y \
 		git ca-certificates autoconf build-essential\
-		libreadline-dev libssl-dev \
-		net-tools procps &&\
+		libreadline-dev libssl-dev &&\
 	git clone https://github.com/findstr/RssReader.git &&\
 	cd RssReader && git submodule update --init &&\
 	cd zlib && CFLAGS='-mstackrealign -fPIC -O3' ./configure &&\
