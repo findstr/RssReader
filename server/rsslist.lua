@@ -33,9 +33,6 @@ local function rssload(content, chapter, guid)
 		if p.link then
 			p.link = p.link:match("([^%?]+)")
 		end
-		if p.guid then
-			p.guid = p.guid:match("([^%?]+)")
-		end
 		if p.guid == guid then
 			assert(false, p.guid)
 		end
@@ -126,7 +123,6 @@ local function refresh(uid)
 	else
 		val = tonumber(val)
 	end
-	print("refresh", now, val, now - val)
 	if now - val < 3600 * 4 then
 		return
 	end
