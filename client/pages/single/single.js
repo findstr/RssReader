@@ -2,7 +2,8 @@
 const app = getApp()
 var config = require("../common/config.js")
 var WxParse = require('../../wxParse/wxParse.js')
-
+// 在页面中定义插屏广告
+let interstitialAd = null
 Page({
 
   /**
@@ -63,6 +64,20 @@ Page({
   },
   onLoad: function (options) {
     console.log(options)
+    // 在页面onLoad回调事件中创建插屏广告实例
+    if (wx.createInterstitialAd) {
+      interstitialAd = wx.createInterstitialAd({
+        adUnitId: 'adunit-a85c2d50a5793f7a'
+      })
+      interstitialAd.onLoad(() => { })
+      interstitialAd.onError((err) => { })
+      interstitialAd.onClose(() => { })
+    }
+    if (interstitialAd) {
+      interstitialAd.show().catch((err) => {
+        console.error(err)
+      })
+    }
     var chapter = app.globalData.chapter[options.id]
     var content = chapter.content
     console.log("onLoad" + chapter.content)

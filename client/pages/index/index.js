@@ -2,7 +2,9 @@
 //获取应用实例
 const app = getApp()
 var config = require("../common/config.js")
-
+// 在页面中定义插屏广告
+let interstitialAd = null
+let ad_timer = null
 Page({
   data: {
     more:true,
@@ -50,6 +52,23 @@ Page({
 
   onLoad: function () {
     var that = this
+    if (wx.createInterstitialAd) {
+      interstitialAd = wx.createInterstitialAd({
+        adUnitId: 'adunit-a85c2d50a5793f7a'
+      })
+      interstitialAd.onLoad(() => { })
+      interstitialAd.onError((err) => { })
+      interstitialAd.onClose(() => { })
+      ad_timer = setInterval(function(){
+        console.log("ad_timer", wx.createInterstitialAd, interstitialAd)
+        if (interstitialAd) {
+          interstitialAd.show().catch((err) => {
+            console.error(err)
+          })
+        }
+        clearInterval(ad_timer)
+      }, 10000)
+    }
     app.login(function () {
       var typ = wx.getStorageSync("filter_type")
       if (typ != undefined && typ != "")
