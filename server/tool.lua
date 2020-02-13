@@ -50,11 +50,11 @@ end
 function M.httpget(url, header)
 	header = header or  {}
 	header[#header + 1] = "Accept-Encoding: gzip, deflate"
-	local status, head, body, ver = client.GET(url)
+	local req = client.GET(url)
 	if head and head["Content-Encoding"] == "gzip" then
 		body = gzip.inflate(body)
 	end
-	return status, head, body, ver
+	return req.status, req.head, req.body, req.ver
 end
 
 return M

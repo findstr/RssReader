@@ -31,7 +31,9 @@ local function weid(code)
 end
 
 local ack_getuid = '{"uid": %s}'
-dispatch["/userinfo/getid"] = function(fd, req, body)
+dispatch["/userinfo/getid"] = function(req)
+	local fd = req.sock
+	local body = req.body
 	local head = {}
 	local code = req.form['code']
 	local wid = weid(code)

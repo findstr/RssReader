@@ -45,8 +45,8 @@ function M.notice()
 	print(status, header, body)
 end
 
-dispatch["/notice/subscribe"] = function(fd, req, body)
-	print("req", body)
+dispatch["/notice/subscribe"] = function(req)
+	print("req", req.body)
 end
 
 return M

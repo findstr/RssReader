@@ -148,8 +148,10 @@ local function refresh(uid)
 	end
 end
 
-dispatch["/rsslist/add"] = function(fd, req, body)
+dispatch["/rsslist/add"] = function(req)
 	local HEAD = {}
+	local fd = req.sock
+	local body = req.body
 	local param = json.decode(body)
 	local uid = param.uid
 	local rss = param.rss
@@ -188,7 +190,9 @@ dispatch["/rsslist/add"] = function(fd, req, body)
 end
 
 
-dispatch["/rsslist/get"] = function(fd, req, body)
+dispatch["/rsslist/get"] = function(req)
+	local fd = req.sock
+	local body = req.body
 	local HEAD = {}
 	local param = json.decode(body)
 	local uid = param.uid
@@ -212,7 +216,9 @@ dispatch["/rsslist/get"] = function(fd, req, body)
 	write(fd, 200, HEAD, ack)
 end
 
-dispatch["/rsslist/del"] = function(fd, req, body)
+dispatch["/rsslist/del"] = function(req)
+	local fd = req.sock
+	local body = req.body
 	local param = json.decode(body)
 	local uid = param.uid
 	local rssid = param.rssid
@@ -256,8 +262,10 @@ dispatch["/rsslist/del"] = function(fd, req, body)
 	write(fd, 200, {}, "")
 end
 
-dispatch["/page/get"] = function(fd, req, body)
+dispatch["/page/get"] = function(req)
 	local out = {}
+	local fd = req.sock
+	local body = req.body
 	local param = json.decode(body)
 	local uid = param.uid
 	local idx = param.index
@@ -302,7 +310,9 @@ dispatch["/page/get"] = function(fd, req, body)
 	write(fd, 200, head, body)
 end
 
-dispatch["/page/read"] = function(fd, req, body)
+dispatch["/page/read"] = function(req)
+	local fd = req.sock
+	local body = req.body
 	local param = json.decode(body)
 	local uid = param.uid
 	local cid = param.cid
@@ -312,7 +322,9 @@ dispatch["/page/read"] = function(fd, req, body)
 	write(fd, 200, {}, "")
 end
 
-dispatch["/page/detail"] = function(fd, req, body)
+dispatch["/page/detail"] = function(req)
+	local fd = req.sock
+	local body = req.body
 	local param = json.decode(body)
 	local uid = param.uid
 	local cid = param.cid
