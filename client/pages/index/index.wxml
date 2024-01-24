@@ -1,4 +1,5 @@
 <!--index.wxml-->
+<ad unit-id="adunit-3750a35597737b4a" bindload="adLoad" binderror="adError" bindclose="adClose"></ad>
 <view class="chapter-list">
   <button type="default" class="-ui-button" bindtap="FilterSheetTap">{{filter_title}}</button>
   <action-sheet hidden="{{filter_hide}}" bindchange="FilterSheetCancel">

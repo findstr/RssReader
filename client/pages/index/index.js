@@ -6,6 +6,15 @@ var config = require("../common/config.js")
 let interstitialAd = null
 let ad_timer = null
 Page({
+  adLoad() {
+    console.log('Banner 广告加载成功')
+  },
+  adError(err) {
+    console.log('Banner 广告加载失败', err)
+  },
+  adClose() {
+    console.log('Banner 广告关闭')
+  },
   data: {
     more:true,
     chapter:[],
@@ -130,11 +139,7 @@ Page({
         var dst
         for (var i = idx; i < dat.length + idx; i++)
           dat[i].index = i
-        if (idx == 0) {
-          dst = dat
-        } else {
-          dst = that.data.chapter.concat(dat)
-        }
+        dst = dat
         that.setData({
           "chapter": dst
         })
@@ -234,7 +239,5 @@ Page({
     })
   },
   onShareAppMessage: function () {
-
   }
-
 })

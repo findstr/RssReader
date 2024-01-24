@@ -10,6 +10,8 @@ Page({
    * 页面的初始数据
    */
   data: {},
+  title: "",
+  link:"",
 
   /**
    * 生命周期函数--监听页面加载
@@ -36,6 +38,7 @@ Page({
         chapter.author = dat.author
         chapter.date = dat.date
         chapter.link = dat.link
+        that.link = dat.link
         wx.hideLoading()
         try {
           WxParse.wxParse('article', 'html', dat.content, that, 5)
@@ -78,7 +81,16 @@ Page({
         console.error(err)
       })
     }
+    var share = options.share
+    console.log(share == undefined)
+    if (share != undefined) {
+            share = decodeURIComponent(share)
+            var chapter = JSON.parse(share)
+            this.loadContent(chapter, true)
+            return
+    }
     var chapter = app.globalData.chapter[options.id]
+    this.title = chapter.title
     var content = chapter.content
     console.log("onLoad" + chapter.content)
     console.log(chapter)
@@ -113,5 +125,18 @@ Page({
   bindchange: function(e) {
     console.log("swipper-change")
     console.log(e)
+  },
+
+  onShareAppMessage: function () {
+        console.log(this.link, this.title)
+        var share = encodeURIComponent(JSON.stringify({
+                "cid": this.link,
+                "title": this.title
+        }))
+       
+        return {
+                "title": this.title,
+                "path": "/pages/single/single?" + "share=" + share,
+        }
   }
 })
