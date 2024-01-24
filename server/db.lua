@@ -1,4 +1,4 @@
-local core = require "sys.core"
+local env = require "sys.env"
 local dns = require "sys.dns"
 local redis = require "sys.db.redis"
 local M = {}
@@ -6,14 +6,14 @@ local db
 
 function M.start()
 	local err
-	local name = core.envget("dbaddr")
-	local port = core.envget("dbport")
+	local name = env.get("dbaddr")
+	local port = env.get("dbport")
 	print("db start", name, port)
-	local addr = dns.resolve(name)
+	local addr = dns.lookup(name, dns.A)
 	print("dbport", addr, port)
 	db, err= redis:connect {
 		addr = string.format("%s:%s", addr, port),
-		db = 12,
+		db = 13,
 	}
 	assert(db, err)
 end

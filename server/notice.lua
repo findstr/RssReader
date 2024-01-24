@@ -1,4 +1,6 @@
 local core = require "sys.core"
+local env = require "sys.env"
+local logger = require "sys.logger"
 local client = require "http.client"
 local tool = require "tool"
 local dispatch = require "router"
@@ -8,9 +10,9 @@ local format = string.format
 local M = {}
 local token = nil
 local token_expire = 0
-local appid = assert(core.envget("appid"), "appid")
-local tempid = assert(core.envget("template"), "template")
-local secret = assert(core.envget("secret"), "secret")
+local appid = assert(env.get("appid"), "appid")
+local tempid = assert(env.get("template"), "template")
+local secret = assert(env.get("secret"), "secret")
 local fmt_token_url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s'
 
 local function fetchtoken()
@@ -20,7 +22,7 @@ local function fetchtoken()
 	end
 	local ack = {}
 	local status, header, body = tool.httpget(format(fmt_token_url,appid, secret))
-	core.log(body)
+	logger.info(body)
 	tool.jsondecode(body, ack)
 	token = ack.access_token
 	token_expire = tonumber(ack.expires_in) + now
