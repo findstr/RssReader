@@ -1,9 +1,8 @@
-local SLAXML = require "slaxml"
+local SLAXML = require "server.slaxml"
 local iconv = require "iconv"
 local M = {}
 
 local gsub = string.gsub
-local gmatch = string.gmatch
 local match = string.match
 local format = string.format
 local find = string.find

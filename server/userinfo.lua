@@ -1,11 +1,10 @@
-local core = require "sys.core"
-local logger = require "sys.logger"
-local env = require "sys.env"
-local dispatch = require "router"
+local core = require "core"
+local logger = require "core.logger"
+local env = require "core.env"
+local dispatch = require "server.router"
 local format = string.format
-local tool = require "tool"
-local db = require "db" .instance()
-local write = require "http.server" . write
+local tool = require "server.tool"
+local db = require "server.db" .instance()
 local dbk_account_id = "account:id"
 local dbk_account_weid = "account:weid"
 local dbk_account_uid = "account:uid"
@@ -33,11 +32,9 @@ local function weid(code)
 end
 
 local ack_getuid = '{"uid": %s}'
-dispatch["/userinfo/getid"] = function(req)
-	local fd = req.sock
-	local body = req.body
+dispatch["/userinfo/getid"] = function(stream, body)
 	local head = {}
-	local code = req.form['code']
+	local code = stream.form['code']
 	local wid = weid(code)
 	local ok, uid = db:hget(dbk_account_weid, wid)
 	logger.info("/userinfo/getid", code, uid, wid)
@@ -46,7 +43,8 @@ dispatch["/userinfo/getid"] = function(req)
 		db:hset(dbk_account_weid, wid, uid)
 		db:hset(dbk_account_uid, uid, wid)
 	end
-	write(fd, 200, head, format(ack_getuid, uid))
+	stream:respond(200, head)
+	stream:close(format(ack_getuid, uid))
 end
 
 ---------------module

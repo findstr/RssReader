@@ -1,6 +1,6 @@
-local env = require "sys.env"
-local dns = require "sys.dns"
-local redis = require "sys.db.redis"
+local env = require "core.env"
+local dns = require "core.dns"
+local redis = require "core.db.redis"
 local M = {}
 local db
 

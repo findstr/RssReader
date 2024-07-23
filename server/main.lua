@@ -1,16 +1,10 @@
-local core = require "sys.core"
-local json = require "sys.json"
-local logger = require "sys.logger"
-local env = require "sys.env"
-local dns = require "sys.dns"
-local server = require "http.server"
-local client = require "http.client"
-local gzip = require "gzip"
-local db = require "db"
-local dispatch = require "router"
-local write = server.write
-dispatch["/"] = function(request)
-	local fd = request.sock
+local core = require "core"
+local logger = require "core.logger"
+local env = require "core.env"
+local server = require "core.http"
+local db = require "server.db"
+local dispatch = require "server.router"
+dispatch["/"] = function(stream)
 	local body = [[
 		<html>
 			<head>Hello Stupid</head>
@@ -26,10 +20,9 @@ dispatch["/"] = function(request)
 	--	"Content-Encoding: gzip",
 		"Content-Type: text/html",
 	}
-	write(fd, 200, head, body)
+	stream:respond(200, head)
+	stream:close(body)
 end
-
-local tool = require "tool"
 
 local domain_html = [[
 <!DOCTYPE html>
@@ -77,42 +70,45 @@ local domain_html = [[
 
 
 core.start(function()
-	print("RssReader startup")
-	db.start()
-	require "userinfo"
-	require "rsslist"
-	server.listen {
-		tls_port = assert(env.get("listen")),
-		tls_certs = {
-			{
-				cert = "/home/findstrx/letsencrypt/weixin.pem",
-				cert_key = "/home/findstrx/letsencrypt/weixin.key",
-			},
+	local tool = require "server.tool"
+	tool.httpget("https://coolshell.cn/feed")
+	--tool.httpget("https://blog.gotocoding.com/feed")
 
+
+	local err = env.load("server/rssd.conf")
+	assert(not err, err)
+	print("RssReader startup", env.get("listen"))
+	db.start()
+	require "server.userinfo"
+	require "server.rsslist"
+	server.listen {
+		tls = true,
+		port = assert(env.get("listen")),
+		certs = {
 			{
 				cert = "/home/findstrx/letsencrypt/cert.pem",
 				cert_key = "/home/findstrx/letsencrypt/key.pem",
 			},
 		},
-		handler = function(req)
-			local sock = req.sock
-			logger.info(req.uri)
-			logger.info(req.version)
-			print("uri", req.uri)
-			local host = req.header["host"]
+		handler = function(stream)
+			local header = stream.header
+			local body = stream:readall()
+			logger.info(stream.path)
+			logger.info(stream.version)
+			local host = header["host"]
 			if host == "gotocoding.com" then
-				write(req.sock, 404, {"Content-Type: text/html"}, domain_html)
+				stream:respond(404, {"Content-Type: text/html"})
+				stream:close(domain_html)
 				return
 			end
-			local c = dispatch[req.uri]
+			local c = dispatch[stream.path]
 			if c then
-				c(req)
+				c(stream, body)
 				return
 			else
-				print("Unsupport uri", req.uri)
-				write(req.sock, 404,
-					{"Content-Type: text/plain"},
-					"404 Page Not Found")
+				print("Unsupport uri", stream.uri)
+				stream:respond(404, {"Content-Type: text/plain"})
+				stream:close("404 Page Not Found")
 			end
 		end
 	}

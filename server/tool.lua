@@ -1,7 +1,8 @@
 local gmatch = string.gmatch
 local gsub = string.gsub
 local format = string.format
-local client = require "http.client"
+local time = require "core.time"
+local client = require "core.http"
 local gzip = require "gzip"
 local M = {}
 
@@ -46,15 +47,15 @@ M.escapehtml = function(input)
 	input = gsub(input, tbl[1], "")
 	return gsub(input, tbl[2], "")
 end
-
 function M.httpget(url, header)
-	header = header or  {}
-	header[#header + 1] = "Accept-Encoding: gzip, deflate"
-	local req = client.GET(url)
-	if head and head["Content-Encoding"] == "gzip" then
-		body = gzip.inflate(body)
+	local ack = client.GET(url, {
+		["accept-encoding"] = "gzip, deflate"
+	})
+	local header = ack.header
+	if header and header["content-encoding"] == "gzip" then
+		ack.body = gzip.inflate(ack.body)
 	end
-	return req.status, req.head, req.body, req.ver
+	return ack.status, ack.head, ack.body, ack.ver
 end
 
 return M

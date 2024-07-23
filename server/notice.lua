@@ -1,9 +1,9 @@
-local core = require "sys.core"
-local env = require "sys.env"
-local logger = require "sys.logger"
+local core = require "core"
+local env = require "core.env"
+local logger = require "core.logger"
 local client = require "http.client"
-local tool = require "tool"
-local dispatch = require "router"
+local tool = require "server.tool"
+local dispatch = require "server.router"
 
 local format = string.format
 
